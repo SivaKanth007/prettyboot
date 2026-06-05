@@ -180,6 +180,11 @@ User confirms the visual result on next reboot.
 
 ## Future Ideas (not committed)
 
+- **Installable desktop app** (the long-term goal): a packaged GUI where users
+  drag-and-drop theme folders, swap icons, tweak backgrounds, and apply — all
+  without the terminal. Distributed as an installable package (e.g. `.deb` /
+  AppImage / Flatpak). It would wrap the same shell logic so the CLI remains the
+  trusted, auditable core.
 - Optional Go TUI front-end (theme gallery + screenshot preview) calling the same
   logic — only if real demand appears.
 - Optional symlink of `prettyboot.sh` to `/usr/local/bin/prettyboot`.
