@@ -52,8 +52,11 @@ cat > "$tmp/os_win.svg" <<'SVG'
 </svg>
 SVG
 for d in "$md" "$ml"; do
-  rsvg-convert -w 128 -h 128 "$tmp/os_linux.svg" -o "$d/icons/os_linux.png"
-  rsvg-convert -w 128 -h 128 "$tmp/os_win.svg"   -o "$d/icons/os_win.png"
+  # render at 256px for crispness; rEFInd scales down to big_icon_size.
+  rsvg-convert -w 256 -h 256 "$tmp/os_linux.svg" -o "$d/icons/os_linux.png"
+  # os_ubuntu.png: rEFInd matches the "ubuntu" tag to this name first, then os_linux.
+  cp "$d/icons/os_linux.png" "$d/icons/os_ubuntu.png"
+  rsvg-convert -w 256 -h 256 "$tmp/os_win.svg"   -o "$d/icons/os_win.png"
 done
 rm -rf "$tmp"
 
@@ -68,6 +71,13 @@ selection_big themes/$2/selection_big.png
 selection_small themes/$2/selection_small.png
 big_icon_size 128
 small_icon_size 48
+# clean, mac-like UI: hide the path-text label, scroll arrows, key hints and
+# the OS "badge" overlay; show only power controls in the tool row.
+hideui hints,arrows,label,badges,editor,safemode
+showtools shutdown,reboot
+# drop the auto-detected fallback loader and tools dir so only real OSes show.
+dont_scan_dirs ESP:/EFI/BOOT,EFI/tools
+dont_scan_files fbx64.efi,mmx64.efi,MokManager.efi
 EOF
 }
 write_conf "$md" mac-dark
