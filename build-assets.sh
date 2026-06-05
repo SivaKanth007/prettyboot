@@ -82,4 +82,10 @@ EOF
 write_conf "$md" mac-dark
 write_conf "$ml" mac-light
 
+# Dark theme only: launch Windows in graphics mode. Because the dark background is
+# near-black, the brief handoff screen stays black (clean) instead of showing the
+# verbose text-mode "Starting bootmgfw.efi" message. (On the light theme this would
+# leave a white screen, so it is intentionally NOT added there.)
+echo "use_graphics_for +,windows" >> "$md/theme.conf"
+
 echo "Generated themes: mac-dark, mac-light"
