@@ -51,6 +51,9 @@ for d in "$md" "$ml"; do
   rsvg-convert -w 256 -h 256 "$tmp/os_ubuntu.svg" -o "$d/icons/os_ubuntu.png"
   cp "$d/icons/os_ubuntu.png" "$d/icons/os_linux.png"   # linux fallback = ubuntu badge
   rsvg-convert -w 256 -h 256 "$tmp/os_win.svg"    -o "$d/icons/os_win.png"
+  # rEFInd tags the modern Windows Boot Manager as "win8" and looks for os_win8
+  # FIRST; without it, it falls back to its built-in tilted Win8 logo. Provide it.
+  cp "$d/icons/os_win.png" "$d/icons/os_win8.png"
 done
 rm -rf "$tmp"
 
