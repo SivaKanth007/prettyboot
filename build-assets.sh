@@ -64,7 +64,7 @@ rm -rf "$tmp"
 # Glyphs are centered per fixed-width cell on a single baseline so spacing is even.
 FONT_TTF="/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
 make_font() {  # <outfile> <color>
-  local out="$1" color="$2" PS=28 CW=22 CH=42 YPAD=8 cp g ch
+  local out="$1" color="$2" PS=15 CW=13 CH=25 YPAD=5 cp g ch
   local ftmp; ftmp="$(mktemp -d)"; local cells=()
   for cp in $(seq 32 127); do
     ch="$ftmp/c$cp.png"
