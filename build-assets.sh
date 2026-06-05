@@ -9,8 +9,9 @@ ml="$here/themes/mac-light"
 mkdir -p "$md/icons" "$ml/icons"
 
 # --- backgrounds ---
-# mac-dark: Sonoma-style radial purple -> near-black
-convert -size ${W}x${H} radial-gradient:'#3a2a5c'-'#08060f' "$md/background.png"
+# mac-dark: deep near-black with a subtle purple core. Kept dark on purpose so
+# rEFInd's auto text-color picks WHITE (it has no text-color setting).
+convert -size ${W}x${H} radial-gradient:'#1c1430'-'#020103' "$md/background.png"
 # mac-light: Big Sur-style color gradient + baked frosted panel (no live blur at boot)
 convert -size ${W}x${H} gradient:'#ff9a8b'-'#8fd3f4' \
   -fill 'rgba(255,255,255,0.35)' -draw 'roundrectangle 560,400,1360,680,28,28' \
@@ -60,32 +61,11 @@ for d in "$md" "$ml"; do
 done
 rm -rf "$tmp"
 
-# --- fonts (rEFInd bitmap font: 96 equal-width cells, ASCII 32..127, one row) ---
-# Glyphs are centered per fixed-width cell on a single baseline so spacing is even.
-FONT_TTF="/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
-make_font() {  # <outfile> <color>
-  local out="$1" color="$2" PS=15 CW=13 CH=25 YPAD=5 cp g ch
-  local ftmp; ftmp="$(mktemp -d)"; local cells=()
-  for cp in $(seq 32 127); do
-    ch="$ftmp/c$cp.png"
-    if [ "$cp" -eq 32 ] || [ "$cp" -eq 127 ]; then
-      convert -size ${CW}x${CH} xc:none "$ch"            # blank: space / DEL
-    else
-      case "$cp" in
-        37) g='%%' ;;                                     # escape percent for IM
-        92) g='\\' ;;                                     # backslash
-        *)  g="$(printf "\\$(printf '%03o' "$cp")")" ;;
-      esac
-      convert -size ${CW}x${CH} xc:none -font "$FONT_TTF" -pointsize $PS -fill "$color" \
-              -gravity South -annotate +0+${YPAD} "$g" "$ch"
-    fi
-    cells+=("$ch")
-  done
-  convert "${cells[@]}" +append -background none "$out"
-  rm -rf "$ftmp"
-}
-make_font "$md/font.png" '#f2f2f7'   # light text for the dark theme
-make_font "$ml/font.png" '#1c1c1e'   # dark text for the light theme
+# --- fonts ---
+# No custom font: rEFInd has no text-color option (it auto-picks black/white from
+# the background brightness, ignoring a font PNG's color), so a custom font only
+# changes shape/size, not readability. We use rEFInd's built-in 14pt font and
+# instead control readability via background brightness (dark bg => white text).
 
 # --- theme.conf for each theme ---
 write_conf() {  # <dir> <name>
@@ -96,7 +76,6 @@ banner_scale fillscreen
 icons_dir themes/$2/icons
 selection_big themes/$2/selection_big.png
 selection_small themes/$2/selection_small.png
-font themes/$2/font.png
 big_icon_size 128
 small_icon_size 48
 # keep OS name labels visible; hide only the key hints, scroll arrows and the
