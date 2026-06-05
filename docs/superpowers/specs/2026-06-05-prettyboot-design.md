@@ -31,6 +31,24 @@ look) and `mac-dark` (Sonoma look).
   (ImageMagick/librsvg) are needed only on the machine that *generates* the mac
   theme, never on a user's machine.
 
+## Implementation Language
+
+**POSIX shell (bash)** for v1. Rationale:
+
+- The tool does thin, infrequent file/package/text-edit operations — no hot loop,
+  no long-running process. Compiled-language speed (Go) brings no benefit here.
+- Zero dependencies; shell is present on every Linux. Clone and run.
+- **Auditability:** the tool runs as root and edits the ESP / `refind.conf`. A
+  readable script lets users inspect exactly what touches their boot partition
+  before running it — a trust requirement a compiled binary or Node bundle works
+  against.
+- Genre standard: rEFInd's own installer and most theme installers are shell.
+
+Rejected for v1: **npm/Node** (runtime dependency + black-box for a root/boot
+tool) and **Go** (no speed benefit for this workload, per-arch release pipeline,
+less auditable). An optional Go TUI front-end is parked in Future Ideas, to be
+built only if real demand appears.
+
 ## Repo Structure
 
 ```
@@ -162,6 +180,8 @@ User confirms the visual result on next reboot.
 
 ## Future Ideas (not committed)
 
+- Optional Go TUI front-end (theme gallery + screenshot preview) calling the same
+  logic — only if real demand appears.
 - Optional symlink of `prettyboot.sh` to `/usr/local/bin/prettyboot`.
 - A safe, opt-in light/dark auto-switch that first checks both variants exist.
 - A theme gallery / screenshots in the README.
