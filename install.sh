@@ -31,7 +31,11 @@ pb_deploy_themes "$SRC_THEMES" "$REFIND_DIR/themes"
 # 5. Set defaults: 10s timeout, mac-dark active.
 pb_block_write "$CONF" 10 themes/mac-dark/theme.conf
 
+# 6. Symlink into PATH so the user can just run `sudo prettyboot` (opens the menu).
+if [ -d /usr/local/bin ] && [ -w /usr/local/bin ]; then
+  ln -sf "$here/prettyboot.sh" /usr/local/bin/prettyboot
+fi
+
 echo "prettyboot installed. Default theme: mac-dark, timeout 10s."
-echo "Reboot to see it. Switch anytime:"
-echo "  sudo $here/prettyboot.sh list"
-echo "  sudo $here/prettyboot.sh use mac-light"
+echo "Reboot to see it. Manage anytime with the menu:"
+echo "  sudo prettyboot"

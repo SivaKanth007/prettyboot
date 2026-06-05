@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
-here="$(cd "$(dirname "$0")" && pwd)"
+# resolve symlinks so `prettyboot` in PATH still finds lib.sh next to the real script
+here="$(cd "$(dirname "$(readlink -f "$0")")" && pwd)"
 . "$here/lib.sh"
 
 REFIND_DIR="${REFIND_DIR:-/boot/efi/EFI/refind}"
@@ -17,7 +18,60 @@ Usage (run with sudo on a real system):
   prettyboot.sh next                 switch to the next valid theme
   prettyboot.sh timeout <secs|off>   set boot menu timeout (off = wait forever)
   prettyboot.sh reset                remove prettyboot's settings (plain rEFInd)
+
+  prettyboot.sh                      (no command) open the interactive menu
 EOF
+}
+
+# Interactive menu shown when prettyboot is run with no command.
+menu() {
+  local active t choice
+  while true; do
+    active="$(pb_active_theme "$CONF")"
+    t="$(pb_block_get "$CONF" timeout)"
+    case "$t" in "") t="(not set)" ;; 0) t="off (waits for you)" ;; *) t="${t}s" ;; esac
+    printf '\n=== prettyboot ===\n'
+    printf 'Active theme : %s\n'   "${active:-none}"
+    printf 'Timeout      : %s\n\n' "$t"
+    printf '  1) Choose theme\n'
+    printf '  2) Set timeout\n'
+    printf '  3) Reset to plain rEFInd\n'
+    printf '  4) Quit\n'
+    printf 'Select: '
+    read -r choice || break
+    case "$choice" in
+      1) menu_choose_theme ;;
+      2) menu_set_timeout ;;
+      3) "$0" reset || true ;;
+      4|q|Q|quit|exit) break ;;
+      *) echo "Invalid choice." ;;
+    esac
+  done
+}
+
+menu_choose_theme() {
+  local names=() n i sel idx mark
+  for n in $(pb_list_theme_names "$THEMES"); do names+=("$n"); done
+  if [ "${#names[@]}" -eq 0 ]; then echo "No themes found in $THEMES"; return; fi
+  echo
+  for i in "${!names[@]}"; do
+    if pb_validate_theme "$THEMES" "${names[$i]}" 2>/dev/null; then mark="✓"; else mark="✗"; fi
+    printf '  %d) %s %s\n' "$((i + 1))" "$mark" "${names[$i]}"
+  done
+  printf 'Theme number (blank to cancel): '
+  read -r sel || return
+  case "$sel" in ''|*[!0-9]*) echo "Cancelled."; return ;; esac
+  idx=$((sel - 1))
+  if [ "$idx" -lt 0 ] || [ "$idx" -ge "${#names[@]}" ]; then echo "Out of range."; return; fi
+  "$0" use "${names[$idx]}" || true
+}
+
+menu_set_timeout() {
+  local val
+  printf "Timeout seconds, or 'off' to wait forever (blank to cancel): "
+  read -r val || return
+  [ -n "$val" ] || { echo "Cancelled."; return; }
+  "$0" timeout "$val" || true
 }
 
 cmd="${1:-}"
@@ -64,7 +118,10 @@ case "$cmd" in
     pb_block_remove "$CONF"
     echo "prettyboot settings removed; plain rEFInd restored"
     ;;
-  ''|-h|--help|help)
+  ''|menu)
+    menu
+    ;;
+  -h|--help|help)
     usage
     ;;
   *)

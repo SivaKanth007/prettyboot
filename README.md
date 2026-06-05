@@ -21,6 +21,14 @@ Reboot to see it.
 
 ## Usage
 
+After install, just run the interactive menu:
+
+```bash
+sudo prettyboot                          # opens a menu: choose theme, set timeout, reset
+```
+
+Or use the individual commands directly (also scriptable):
+
 ```bash
 sudo ./prettyboot.sh list                # list themes (* active, ✓ valid, ✗ broken)
 sudo ./prettyboot.sh use mac-light       # activate a theme

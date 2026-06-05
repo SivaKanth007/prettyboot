@@ -72,3 +72,31 @@ teardown() { rm -rf "$TMP"; }
   run grep -c 'prettyboot' "$TMP/refind.conf"
   [ "$output" = "0" ]
 }
+
+# --- interactive menu (no args) driven via piped stdin ---
+
+@test "menu: quit exits cleanly" {
+  make_theme "$TMP/themes" mac-dark
+  run bash -c "printf '4\n' | REFIND_DIR='$TMP' '$BATS_TEST_DIRNAME/../prettyboot.sh'"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"=== prettyboot ==="* ]]
+}
+
+@test "menu: choose theme activates the selected one" {
+  make_theme "$TMP/themes" mac-dark
+  make_theme "$TMP/themes" mac-light
+  # 1=Choose theme, 2=second listed (alphabetical: mac-light), 4=Quit
+  run bash -c "printf '1\n2\n4\n' | REFIND_DIR='$TMP' '$BATS_TEST_DIRNAME/../prettyboot.sh'"
+  [ "$status" -eq 0 ]
+  run grep -c 'include themes/mac-light/theme.conf' "$TMP/refind.conf"
+  [ "$output" = "1" ]
+}
+
+@test "menu: set timeout off" {
+  make_theme "$TMP/themes" mac-dark
+  # 2=Set timeout, off, 4=Quit
+  run bash -c "printf '2\noff\n4\n' | REFIND_DIR='$TMP' '$BATS_TEST_DIRNAME/../prettyboot.sh'"
+  [ "$status" -eq 0 ]
+  run grep -c '^timeout 0' "$TMP/refind.conf"
+  [ "$output" = "1" ]
+}
