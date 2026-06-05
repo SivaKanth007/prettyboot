@@ -23,8 +23,8 @@ Usage (run with sudo on a real system):
 EOF
 }
 
-# Interactive menu shown when prettyboot is run with no command.
-menu() {
+# Simple numbered menu — fallback when stdin/stdout aren't a terminal (pipes/tests).
+menu_simple() {
   local active t choice
   while true; do
     active="$(pb_active_theme "$CONF")"
@@ -72,6 +72,89 @@ menu_set_timeout() {
   read -r val || return
   [ -n "$val" ] || { echo "Cancelled."; return; }
   "$0" timeout "$val" || true
+}
+
+# --- arrow-key TUI (used when stdin/stdout are a terminal) ---
+
+REPLY_INDEX=0
+pb_pause() { printf '\nPress any key to continue...'; read -rsn1 _ || true; }
+
+# tui_select <title> <option>...  -> sets REPLY_INDEX and returns 0; returns 1 if cancelled.
+tui_select() {
+  local title="$1"; shift
+  local options=("$@") n=$# cur=0 key key2 i
+  printf '\033[?25l'                                  # hide cursor
+  while true; do
+    printf '\033[2J\033[H'                            # clear screen, home
+    printf '%s\n\n' "$title"
+    for i in "${!options[@]}"; do
+      if [ "$i" -eq "$cur" ]; then
+        printf '  \033[7m %s \033[0m\n' "${options[$i]}"   # highlighted row
+      else
+        printf '    %s\n' "${options[$i]}"
+      fi
+    done
+    printf '\n(\342\206\221/\342\206\223 move, Enter select, q back)'
+    IFS= read -rsn1 key || { printf '\033[?25h\n'; return 1; }
+    case "$key" in
+      $'\033')                                        # escape sequence
+        IFS= read -rsn2 -t 0.05 key2 || key2=""
+        case "$key2" in
+          '[A') cur=$(( (cur - 1 + n) % n )) ;;       # up
+          '[B') cur=$(( (cur + 1) % n )) ;;           # down
+          '')   printf '\033[?25h\n'; return 1 ;;     # bare Esc = back
+        esac
+        ;;
+      '')   REPLY_INDEX=$cur; printf '\033[?25h\n'; return 0 ;;   # Enter
+      q|Q)  printf '\033[?25h\n'; return 1 ;;
+    esac
+  done
+}
+
+tui_choose_theme() {
+  local names=() labels=() n i mark
+  for n in $(pb_list_theme_names "$THEMES"); do names+=("$n"); done
+  if [ "${#names[@]}" -eq 0 ]; then printf '\033[2J\033[HNo themes found in %s\n' "$THEMES"; pb_pause; return; fi
+  for i in "${!names[@]}"; do
+    pb_validate_theme "$THEMES" "${names[$i]}" 2>/dev/null && mark="✓" || mark="✗"
+    labels+=("$mark ${names[$i]}")
+  done
+  tui_select "Choose a theme:" "${labels[@]}" || return
+  printf '\033[2J\033[H'
+  "$0" use "${names[$REPLY_INDEX]}" || true
+  pb_pause
+}
+
+tui_set_timeout() {
+  local opts=("Off - wait forever" "5 seconds" "10 seconds" "20 seconds" "30 seconds")
+  local vals=(off 5 10 20 30)
+  tui_select "Set boot menu timeout:" "${opts[@]}" || return
+  printf '\033[2J\033[H'
+  "$0" timeout "${vals[$REPLY_INDEX]}" || true
+  pb_pause
+}
+
+menu_tui() {
+  local active t
+  while true; do
+    active="$(pb_active_theme "$CONF")"
+    t="$(pb_block_get "$CONF" timeout)"
+    case "$t" in "") t="(not set)" ;; 0) t="off" ;; *) t="${t}s" ;; esac
+    tui_select "=== prettyboot ===    theme: ${active:-none}    timeout: ${t}" \
+      "Choose theme" "Set timeout" "Reset to plain rEFInd" "Quit" || break
+    case "$REPLY_INDEX" in
+      0) tui_choose_theme ;;
+      1) tui_set_timeout ;;
+      2) printf '\033[2J\033[H'; "$0" reset || true; pb_pause ;;
+      3) break ;;
+    esac
+  done
+  printf '\033[2J\033[H'
+}
+
+# Pick the arrow-key TUI when interactive; fall back to the numbered menu otherwise.
+menu() {
+  if [ -t 0 ] && [ -t 1 ]; then menu_tui; else menu_simple; fi
 }
 
 cmd="${1:-}"
