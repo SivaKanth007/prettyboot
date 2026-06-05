@@ -33,3 +33,48 @@ pb_list_theme_names() {
     basename "$d"
   done | sort
 }
+
+# pb_block_remove <conf>  -- delete the managed block in place (no-op if absent)
+pb_block_remove() {
+  local conf="$1"
+  [ -f "$conf" ] || return 0
+  awk -v b="$PB_BEGIN" -v e="$PB_END" '
+    $0==b {skip=1; next}
+    $0==e {skip=0; next}
+    !skip {print}
+  ' "$conf" > "$conf.tmp" && mv "$conf.tmp" "$conf"
+}
+
+# pb_block_get <conf> <key>  -- print value of key (timeout|include) inside the block
+pb_block_get() {
+  local conf="$1" key="$2"
+  [ -f "$conf" ] || return 0
+  awk -v b="$PB_BEGIN" -v e="$PB_END" -v k="$key" '
+    $0==b {inb=1; next}
+    $0==e {inb=0; next}
+    inb && $1==k {print $2; exit}
+  ' "$conf"
+}
+
+# pb_block_write <conf> <timeout> <include>  -- replace the block with these values
+# include may be empty (writes timeout only). File is created if missing.
+pb_block_write() {
+  local conf="$1" timeout="$2" include="$3"
+  [ -f "$conf" ] || : > "$conf"
+  pb_block_remove "$conf"
+  {
+    echo "$PB_BEGIN"
+    echo "timeout $timeout"
+    [ -n "$include" ] && echo "include $include"
+    echo "$PB_END"
+  } >> "$conf"
+}
+
+# pb_active_theme <conf>  -- print active theme name parsed from the include line
+pb_active_theme() {
+  local inc
+  inc="$(pb_block_get "$1" include)"
+  case "$inc" in
+    themes/*/theme.conf) inc="${inc#themes/}"; echo "${inc%/theme.conf}" ;;
+  esac
+}
