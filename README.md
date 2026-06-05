@@ -26,7 +26,7 @@ sudo ./prettyboot.sh list                # list themes (* active, ✓ valid, ✗
 sudo ./prettyboot.sh use mac-light       # activate a theme
 sudo ./prettyboot.sh use mac-dark
 sudo ./prettyboot.sh next                # cycle to the next valid theme
-sudo ./prettyboot.sh timeout 0           # menu waits forever (0 = no auto-boot)
+sudo ./prettyboot.sh timeout off         # menu waits forever (off = 0 = no auto-boot)
 sudo ./prettyboot.sh timeout 10          # auto-boot default after 10s
 sudo ./prettyboot.sh reset               # remove prettyboot settings -> plain rEFInd
 ```
