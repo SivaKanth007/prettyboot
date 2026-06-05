@@ -60,6 +60,33 @@ for d in "$md" "$ml"; do
 done
 rm -rf "$tmp"
 
+# --- fonts (rEFInd bitmap font: 96 equal-width cells, ASCII 32..127, one row) ---
+# Glyphs are centered per fixed-width cell on a single baseline so spacing is even.
+FONT_TTF="/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
+make_font() {  # <outfile> <color>
+  local out="$1" color="$2" PS=28 CW=22 CH=42 YPAD=8 cp g ch
+  local ftmp; ftmp="$(mktemp -d)"; local cells=()
+  for cp in $(seq 32 127); do
+    ch="$ftmp/c$cp.png"
+    if [ "$cp" -eq 32 ] || [ "$cp" -eq 127 ]; then
+      convert -size ${CW}x${CH} xc:none "$ch"            # blank: space / DEL
+    else
+      case "$cp" in
+        37) g='%%' ;;                                     # escape percent for IM
+        92) g='\\' ;;                                     # backslash
+        *)  g="$(printf "\\$(printf '%03o' "$cp")")" ;;
+      esac
+      convert -size ${CW}x${CH} xc:none -font "$FONT_TTF" -pointsize $PS -fill "$color" \
+              -gravity South -annotate +0+${YPAD} "$g" "$ch"
+    fi
+    cells+=("$ch")
+  done
+  convert "${cells[@]}" +append -background none "$out"
+  rm -rf "$ftmp"
+}
+make_font "$md/font.png" '#f2f2f7'   # light text for the dark theme
+make_font "$ml/font.png" '#1c1c1e'   # dark text for the light theme
+
 # --- theme.conf for each theme ---
 write_conf() {  # <dir> <name>
   cat > "$1/theme.conf" <<EOF
@@ -69,15 +96,12 @@ banner_scale fillscreen
 icons_dir themes/$2/icons
 selection_big themes/$2/selection_big.png
 selection_small themes/$2/selection_small.png
+font themes/$2/font.png
 big_icon_size 128
 small_icon_size 48
-# clean, mac-like UI: hide the path-text label, scroll arrows, key hints and
-# the OS "badge" overlay; show only power controls in the tool row.
-hideui hints,arrows,label,badges,editor,safemode
-showtools shutdown,reboot
-# drop the auto-detected fallback loader and tools dir so only real OSes show.
-dont_scan_dirs ESP:/EFI/BOOT,EFI/tools
-dont_scan_files fbx64.efi,mmx64.efi,MokManager.efi
+# keep OS name labels visible; hide only the key hints, scroll arrows and the
+# OS "badge" overlay for a cleaner look. Boot entries are left untouched.
+hideui hints,arrows,badges
 EOF
 }
 write_conf "$md" mac-dark
