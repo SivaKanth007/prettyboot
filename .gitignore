@@ -1,3 +1,4 @@
 *.tmp
 *.bak
 refind.conf.prettyboot.bak
+.superpowers/
