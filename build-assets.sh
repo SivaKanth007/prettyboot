@@ -77,6 +77,10 @@ small_icon_size 48
 # keep OS name labels visible; hide only the key hints, scroll arrows and the
 # OS "badge" overlay for a cleaner look. Boot entries are left untouched.
 hideui hints,arrows,badges
+# launch these OSes in graphics mode (adds to rEFInd's default of osx). Gives a
+# clean handoff to Windows (its own logo/spinner) instead of the text-mode
+# "Starting bootmgfw.efi" message.
+use_graphics_for +,linux,windows
 EOF
 }
 write_conf "$md" mac-dark
