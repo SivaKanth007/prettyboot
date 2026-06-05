@@ -78,3 +78,9 @@ pb_active_theme() {
     themes/*/theme.conf) inc="${inc#themes/}"; echo "${inc%/theme.conf}" ;;
   esac
 }
+
+# pb_deploy_themes <src_themes_dir> <dest_themes_dir>  -- copy all themes
+pb_deploy_themes() {
+  mkdir -p "$2"
+  cp -r "$1"/. "$2"/
+}

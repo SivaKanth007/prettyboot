@@ -83,3 +83,10 @@ teardown() { rm -rf "$TMP"; }
   run pb_block_get "$conf" include
   [ "$output" = "" ]
 }
+
+@test "deploy_themes copies theme tree to destination" {
+  make_theme "$TMP/src" mac-dark
+  pb_deploy_themes "$TMP/src" "$TMP/dest"
+  [ -f "$TMP/dest/mac-dark/theme.conf" ]
+  [ -f "$TMP/dest/mac-dark/icons/os_linux.png" ]
+}
