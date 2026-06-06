@@ -139,7 +139,15 @@ class Window(Gtk.ApplicationWindow):
         scroll.set_child(self.raw_view)
         scroll.set_vexpand(True)
         box.append(scroll)
+        save = Gtk.Button(label="Save (backup first)")
+        save.connect("clicked", self._on_save_raw)
+        box.append(save)
         return box
+
+    def _on_save_raw(self, _btn):
+        buf = self.raw_view.get_buffer()
+        text = buf.get_text(buf.get_start_iter(), buf.get_end_iter(), True)
+        self._run(lambda: engine.write_conf(text))
 
     def _run(self, work):
         """Run a write op; show any failure in a dialog and refresh the list."""

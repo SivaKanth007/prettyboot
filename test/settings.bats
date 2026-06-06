@@ -32,3 +32,15 @@ teardown() { rm -rf "$TMP"; }
   run PB get showtools
   [ "$output" = "shell" ]
 }
+
+@test "write-conf backs up then replaces refind.conf" {
+  printf 'old contents\n' > "$TMP/refind.conf"
+  printf 'new contents\n' > "$TMP/new.conf"
+  run PB write-conf "$TMP/new.conf"
+  [ "$status" -eq 0 ]
+  run cat "$TMP/refind.conf"
+  [ "$output" = "new contents" ]
+  # exactly one timestamped backup containing the old contents exists
+  run bash -c "grep -l 'old contents' '$TMP'/refind.conf.*.bak | wc -l"
+  [ "$output" = "1" ]
+}

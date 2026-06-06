@@ -225,6 +225,13 @@ case "$cmd" in
     pb_set_asset "$THEMES/$theme" "$slot" "$file" || exit 1
     echo "Updated $slot for $theme"
     ;;
+  write-conf)
+    src="${2:?usage: write-conf <file>}"
+    [ -f "$src" ] || { echo "file not found: $src" >&2; exit 1; }
+    [ -f "$CONF" ] && cp "$CONF" "$CONF.$(date +%Y%m%d%H%M%S).bak"
+    cp "$src" "$CONF"
+    echo "refind.conf updated (backup saved)"
+    ;;
   ''|menu)
     menu
     ;;

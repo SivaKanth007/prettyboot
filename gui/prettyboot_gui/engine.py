@@ -7,6 +7,7 @@ as root. Both are overridable via env for testing:
 """
 import os
 import subprocess
+import tempfile
 
 
 def _bin() -> str:
@@ -69,3 +70,10 @@ def import_theme(path: str, name: str | None = None) -> None:
 
 def set_asset(theme: str, slot: str, path: str) -> None:
     _write("set-asset", theme, slot, path)
+
+
+def write_conf(text: str) -> None:
+    with tempfile.NamedTemporaryFile("w", suffix=".conf", delete=False) as fh:
+        fh.write(text)
+        tmp = fh.name
+    _write("write-conf", tmp)
