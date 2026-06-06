@@ -80,6 +80,14 @@ def write_conf(text: str) -> None:
     _write("write-conf", tmp)
 
 
+def has_managed_block() -> bool:
+    return bool(_read("get", "timeout").strip()) or bool(list_themes())
+
+
+def setup_boot() -> None:
+    _write("setup")
+
+
 def import_path(path: str, name: str | None = None) -> None:
     """Import a theme from a folder or a .zip. For a zip, extract to a temp
     dir; if it contains a single top-level folder, import that folder."""

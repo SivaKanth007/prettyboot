@@ -218,6 +218,9 @@ case "$cmd" in
     key="${2:?usage: get <key>}"
     pb_block_get "$CONF" "$key"
     ;;
+  setup)
+    exec "$here/install.sh"
+    ;;
   set-asset)
     theme="${2:?usage: set-asset <theme> <slot> <file>}"
     slot="${3:?usage: set-asset <theme> <slot> <file>}"

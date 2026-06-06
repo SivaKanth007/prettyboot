@@ -44,3 +44,13 @@ teardown() { rm -rf "$TMP"; }
   run bash -c "grep -l 'old contents' '$TMP'/refind.conf.*.bak | wc -l"
   [ "$output" = "1" ]
 }
+
+@test "setup deploys bundled themes and writes a managed block" {
+  # Use the repo's own themes as the source via SRC_THEMES; skip rEFInd install.
+  run env REFIND_DIR="$TMP" SRC_THEMES="$BATS_TEST_DIRNAME/../themes" \
+      PB_SKIP_REFIND_INSTALL=1 "$BATS_TEST_DIRNAME/../prettyboot.sh" setup
+  [ "$status" -eq 0 ]
+  [ -d "$TMP/themes/mac-dark" ]
+  run grep -c '>>> prettyboot >>>' "$TMP/refind.conf"
+  [ "$output" = "1" ]
+}

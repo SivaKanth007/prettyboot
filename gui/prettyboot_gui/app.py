@@ -38,6 +38,12 @@ class Window(Gtk.ApplicationWindow):
         apply_btn = Gtk.Button(label="Apply")
         apply_btn.connect("clicked", self._on_apply)
         rail.append(apply_btn)
+
+        if not engine.has_managed_block():
+            banner = Gtk.Button(label="Set up boot menu")
+            banner.connect("clicked", lambda _b: self._run(engine.setup_boot))
+            rail.prepend(banner)
+
         box.append(rail)
 
         self.preview_holder = Gtk.Box()

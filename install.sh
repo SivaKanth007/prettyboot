@@ -8,7 +8,9 @@ SRC_THEMES="${SRC_THEMES:-$here/themes}"
 
 # 1. Ensure rEFInd is installed (only if its dir does not already exist).
 if [ ! -d "$REFIND_DIR" ]; then
-  if command -v apt-get >/dev/null 2>&1; then
+  if [ -n "${PB_SKIP_REFIND_INSTALL:-}" ]; then
+    mkdir -p "$REFIND_DIR"; : > "$REFIND_DIR/refind.conf"
+  elif command -v apt-get >/dev/null 2>&1; then
     echo "Installing rEFInd via apt-get..."
     DEBIAN_FRONTEND=noninteractive apt-get install -y refind
   else
