@@ -32,3 +32,13 @@ teardown() { rm -rf "$TMP"; }
   run grep -c '^hideui ' "$CONF"
   [ "$output" = "1" ]
 }
+
+@test "block_unset removes a key, leaves others" {
+  pb_block_set "$CONF" timeout 10
+  pb_block_set "$CONF" resolution "1920 1080"
+  pb_block_unset "$CONF" resolution
+  run pb_block_get "$CONF" resolution
+  [ -z "$output" ]
+  run pb_block_get "$CONF" timeout
+  [ "$output" = "10" ]
+}

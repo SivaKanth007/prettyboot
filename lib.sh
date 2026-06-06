@@ -72,6 +72,18 @@ pb_block_set() {
   ' "$conf" > "$conf.tmp" && mv "$conf.tmp" "$conf"
 }
 
+# pb_block_unset <conf> <key>  -- remove a key line from inside the block (no-op if absent)
+pb_block_unset() {
+  local conf="$1" key="$2"
+  [ -f "$conf" ] || return 0
+  awk -v b="$PB_BEGIN" -v e="$PB_END" -v k="$key" '
+    $0==b {inb=1; print; next}
+    $0==e {inb=0; print; next}
+    inb && $1==k { next }
+    {print}
+  ' "$conf" > "$conf.tmp" && mv "$conf.tmp" "$conf"
+}
+
 # pb_block_write <conf> <timeout> <include>  -- replace the block with these values
 # include may be empty (writes timeout only). File is created if missing.
 pb_block_write() {
