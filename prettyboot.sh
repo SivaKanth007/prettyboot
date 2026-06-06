@@ -201,6 +201,15 @@ case "$cmd" in
     pb_block_remove "$CONF"
     echo "prettyboot settings removed; plain rEFInd restored"
     ;;
+  import)
+    src="${2:?usage: import <dir> [name]}"
+    name="${3:-$(basename "$src")}"
+    pb_validate_theme_dir "$src" || exit 1
+    mkdir -p "$THEMES"
+    rm -rf "${THEMES:?}/$name"
+    cp -r "$src" "$THEMES/$name"
+    echo "Imported theme: $name"
+    ;;
   ''|menu)
     menu
     ;;
