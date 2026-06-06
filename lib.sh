@@ -45,14 +45,14 @@ pb_block_remove() {
   ' "$conf" > "$conf.tmp" && mv "$conf.tmp" "$conf"
 }
 
-# pb_block_get <conf> <key>  -- print value of key (timeout|include) inside the block
+# pb_block_get <conf> <key>  -- print value of key inside the block (multi-word safe)
 pb_block_get() {
   local conf="$1" key="$2"
   [ -f "$conf" ] || return 0
   awk -v b="$PB_BEGIN" -v e="$PB_END" -v k="$key" '
     $0==b {inb=1; next}
     $0==e {inb=0; next}
-    inb && $1==k {print $2; exit}
+    inb && $1==k { $1=""; sub(/^[ \t]+/,""); print; exit }
   ' "$conf"
 }
 
