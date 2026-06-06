@@ -8,3 +8,27 @@ teardown() { rm -rf "$TMP"; }
   run pb_block_get "$CONF" resolution
   [ "$output" = "1920 1080" ]
 }
+
+@test "block_set creates block and key when absent" {
+  : > "$CONF"
+  pb_block_set "$CONF" timeout 10
+  run pb_block_get "$CONF" timeout
+  [ "$output" = "10" ]
+}
+
+@test "block_set updates existing key without touching others" {
+  pb_block_set "$CONF" timeout 10
+  pb_block_set "$CONF" include themes/mac-dark/theme.conf
+  pb_block_set "$CONF" timeout 25
+  run pb_block_get "$CONF" timeout
+  [ "$output" = "25" ]
+  run pb_block_get "$CONF" include
+  [ "$output" = "themes/mac-dark/theme.conf" ]
+}
+
+@test "block_set writes a key only once when repeated" {
+  pb_block_set "$CONF" hideui hints
+  pb_block_set "$CONF" hideui hints,arrows
+  run grep -c '^hideui ' "$CONF"
+  [ "$output" = "1" ]
+}
