@@ -29,7 +29,7 @@ The app has three tabs: **Themes** (switch + full-size live preview +
 drag-drop import), **Settings** (curated, validated options), and
 **Advanced** (raw `refind.conf` with automatic backup).
 
-## Install
+## Install from source
 
 ```bash
 git clone https://github.com/SivaKanth007/prettyboot
