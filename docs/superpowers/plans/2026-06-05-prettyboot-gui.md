@@ -542,7 +542,7 @@ def _make_theme(root: Path, name: str):
 
 def test_list_and_use_and_active(refind):
     _make_theme(refind / "themes", "mac-dark")
-    assert "mac-dark" in engine.list_themes()
+    assert "mac-dark" in [n for n, _, _ in engine.list_themes()]
     engine.use_theme("mac-dark")
     assert engine.active_theme() == "mac-dark"
 
@@ -555,7 +555,7 @@ def test_set_get(refind):
 def test_import_theme(refind, tmp_path):
     src = _make_theme(tmp_path / "src", "cool")
     engine.import_theme(str(src))
-    assert "cool" in engine.list_themes()
+    assert "cool" in [n for n, _, _ in engine.list_themes()]
 ```
 
 - [ ] **Step 2: Run tests to verify they fail**
@@ -618,7 +618,7 @@ def list_themes() -> list[tuple[str, bool, bool]]:
     return themes
 
 
-def active_theme(self=None) -> str | None:
+def active_theme() -> str | None:
     for name, active, _ in list_themes():
         if active:
             return name
@@ -1280,7 +1280,7 @@ def test_import_zip(refind, tmp_path):
         for p in theme.rglob("*"):
             z.write(p, p.relative_to(tmp_path / "pack"))
     engine.import_path(str(zpath))
-    assert "zipped" in engine.list_themes()
+    assert "zipped" in [n for n, _, _ in engine.list_themes()]
 ```
 
 - [ ] **Step 2: Run it to verify it fails**
