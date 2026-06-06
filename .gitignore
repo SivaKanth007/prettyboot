@@ -2,3 +2,6 @@
 *.bak
 refind.conf.prettyboot.bak
 .superpowers/
+.venv/
+__pycache__/
+*.pyc
