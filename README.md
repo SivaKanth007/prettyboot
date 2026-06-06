@@ -7,6 +7,28 @@ light and dark, and lets you switch or add themes with one command — safely.
 > **Scope:** UEFI firmware + rEFInd. Themes follow rEFInd's standard layout, so any
 > rEFInd theme from the internet drops in and works.
 
+## Install (Ubuntu/Debian)
+
+```bash
+sudo add-apt-repository ppa:sivakanth007/prettyboot
+sudo apt update
+sudo apt install prettyboot
+```
+
+This installs both faces of prettyboot:
+
+- **Terminal:** run `prettyboot` for the CLI / interactive menu.
+- **Desktop:** search "prettyboot" in your apps to open the GUI.
+
+On first launch, click **Set up boot menu** to deploy themes and enable
+rEFInd. Updates arrive automatically through `apt upgrade`.
+
+## GUI
+
+The app has three tabs: **Themes** (switch + full-size live preview +
+drag-drop import), **Settings** (curated, validated options), and
+**Advanced** (raw `refind.conf` with automatic backup).
+
 ## Install
 
 ```bash
