@@ -8,6 +8,7 @@ as root. Both are overridable via env for testing:
 import os
 import subprocess
 import tempfile
+import zipfile
 
 
 def _bin() -> str:
@@ -77,3 +78,18 @@ def write_conf(text: str) -> None:
         fh.write(text)
         tmp = fh.name
     _write("write-conf", tmp)
+
+
+def import_path(path: str, name: str | None = None) -> None:
+    """Import a theme from a folder or a .zip. For a zip, extract to a temp
+    dir; if it contains a single top-level folder, import that folder."""
+    if path.lower().endswith(".zip"):
+        tmp = tempfile.mkdtemp(prefix="prettyboot-")
+        with zipfile.ZipFile(path) as z:
+            z.extractall(tmp)
+        entries = [os.path.join(tmp, e) for e in os.listdir(tmp)]
+        dirs = [e for e in entries if os.path.isdir(e)]
+        src = dirs[0] if len(dirs) == 1 and not name else tmp
+        import_theme(src, name)
+    else:
+        import_theme(path, name)

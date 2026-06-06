@@ -86,7 +86,7 @@ class Window(Gtk.ApplicationWindow):
     def _on_drop(self, _t, value, _x, _y):
         path = value.get_path()
         if path:
-            self._run(lambda: engine.import_theme(path))
+            self._run(lambda: engine.import_path(path))
         return True
 
     def _on_bg_drop(self, _t, value, _x, _y):

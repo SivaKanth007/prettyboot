@@ -44,3 +44,16 @@ def test_import_theme(refind, tmp_path):
     src = _make_theme(tmp_path / "src", "cool")
     engine.import_theme(str(src))
     assert "cool" in [n for n, _, _ in engine.list_themes()]
+
+
+import zipfile
+
+
+def test_import_zip(refind, tmp_path):
+    theme = _make_theme(tmp_path / "pack", "zipped")
+    zpath = tmp_path / "zipped.zip"
+    with zipfile.ZipFile(zpath, "w") as z:
+        for p in theme.rglob("*"):
+            z.write(p, p.relative_to(tmp_path / "pack"))
+    engine.import_path(str(zpath))
+    assert "zipped" in [n for n, _, _ in engine.list_themes()]
