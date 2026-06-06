@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=prettyboot
+Comment=Manage your rEFInd boot menu theme and settings
+Exec=prettyboot-gui
+Icon=prettyboot
+Terminal=false
+Categories=System;Settings;
+Keywords=boot;refind;theme;dualboot;

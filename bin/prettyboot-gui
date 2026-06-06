@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+# Launches the GUI from the installed location.
+exec python3 -m prettyboot_gui.main "$@"
