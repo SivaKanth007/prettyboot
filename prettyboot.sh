@@ -170,8 +170,8 @@ case "$cmd" in
   use)
     name="${2:?usage: use <theme>}"
     pb_validate_theme "$THEMES" "$name" || exit 1
-    t="$(pb_block_get "$CONF" timeout)"; t="${t:-10}"
-    pb_block_write "$CONF" "$t" "themes/$name/theme.conf"
+    [ -n "$(pb_block_get "$CONF" timeout)" ] || pb_block_set "$CONF" timeout 10
+    pb_block_set "$CONF" include "themes/$name/theme.conf"
     echo "Active theme: $name"
     ;;
   next)
@@ -193,8 +193,7 @@ case "$cmd" in
       off) val=0 ;;
       ''|*[!0-9]*) echo "timeout must be a number or 'off'" >&2; exit 1 ;;
     esac
-    inc="$(pb_block_get "$CONF" include)"
-    pb_block_write "$CONF" "$val" "$inc"
+    pb_block_set "$CONF" timeout "$val"
     echo "Timeout: $val"
     ;;
   reset)
@@ -209,6 +208,15 @@ case "$cmd" in
     rm -rf "${THEMES:?}/$name"
     cp -r "$src" "$THEMES/$name"
     echo "Imported theme: $name"
+    ;;
+  set)
+    key="${2:?usage: set <key> <value>}"; shift 2
+    pb_block_set "$CONF" "$key" "$*"
+    echo "$key = $*"
+    ;;
+  get)
+    key="${2:?usage: get <key>}"
+    pb_block_get "$CONF" "$key"
     ;;
   ''|menu)
     menu
