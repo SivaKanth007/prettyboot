@@ -1,3 +1,4 @@
 #!/usr/bin/env bash
 # Launches the GUI from the installed location.
+export PYTHONPATH="/usr/share/prettyboot:${PYTHONPATH:-}"
 exec python3 -m prettyboot_gui.main "$@"

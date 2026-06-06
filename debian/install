@@ -1,0 +1,8 @@
+lib.sh                       usr/share/prettyboot/
+prettyboot.sh                usr/share/prettyboot/
+install.sh                   usr/share/prettyboot/
+themes                       usr/share/prettyboot/
+gui/prettyboot_gui           usr/share/prettyboot/
+bin/prettyboot-gui           usr/bin/
+gui/prettyboot.desktop       usr/share/applications/
+gui/com.prettyboot.policy    usr/share/polkit-1/actions/

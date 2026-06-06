@@ -1,0 +1,16 @@
+Source: prettyboot
+Section: admin
+Priority: optional
+Maintainer: SivaKanth007 <dtavvala@asu.edu>
+Build-Depends: debhelper (>= 13)
+Standards-Version: 4.6.2
+Homepage: https://github.com/SivaKanth007/prettyboot
+
+Package: prettyboot
+Architecture: all
+Depends: ${misc:Depends}, refind, python3, python3-gi, gir1.2-gtk-4.0, policykit-1
+Description: Graphical, themeable rEFInd boot menu manager
+ prettyboot manages a rEFInd boot menu: switch Mac-style light/dark themes,
+ set timeout and other options, drag-and-drop import themes, and edit icons.
+ Provides both a terminal CLI (prettyboot) and a GTK desktop app
+ (searchable as "prettyboot").
