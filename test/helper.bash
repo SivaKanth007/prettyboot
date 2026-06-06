@@ -9,4 +9,6 @@ make_theme() {
   : > "$1/$2/selection_small.png"
   : > "$1/$2/icons/os_linux.png"
   : > "$1/$2/icons/os_win.png"
+  : > "$1/$2/icons/os_win8.png"
+  : > "$1/$2/icons/os_ubuntu.png"
 }

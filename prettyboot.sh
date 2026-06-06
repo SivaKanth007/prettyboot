@@ -218,6 +218,13 @@ case "$cmd" in
     key="${2:?usage: get <key>}"
     pb_block_get "$CONF" "$key"
     ;;
+  set-asset)
+    theme="${2:?usage: set-asset <theme> <slot> <file>}"
+    slot="${3:?usage: set-asset <theme> <slot> <file>}"
+    file="${4:?usage: set-asset <theme> <slot> <file>}"
+    pb_set_asset "$THEMES/$theme" "$slot" "$file" || exit 1
+    echo "Updated $slot for $theme"
+    ;;
   ''|menu)
     menu
     ;;

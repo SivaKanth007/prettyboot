@@ -65,3 +65,7 @@ def set_timeout(value: str) -> None:
 
 def import_theme(path: str, name: str | None = None) -> None:
     _write("import", path, *( [name] if name else [] ))
+
+
+def set_asset(theme: str, slot: str, path: str) -> None:
+    _write("set-asset", theme, slot, path)

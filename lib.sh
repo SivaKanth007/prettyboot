@@ -92,6 +92,19 @@ pb_block_unset() {
   ' "$conf" > "$conf.tmp" && mv "$conf.tmp" "$conf"
 }
 
+# pb_set_asset <theme_dir> <slot> <file>  -- replace a theme asset, syncing
+# the rEFInd duplicate icon pairs. slot: background|win|ubuntu|linux.
+pb_set_asset() {
+  local dir="$1" slot="$2" file="$3"
+  [ -f "$file" ] || { echo "source file not found: $file" >&2; return 1; }
+  case "$slot" in
+    background) cp "$file" "$dir/background.png" ;;
+    win)        cp "$file" "$dir/icons/os_win.png"; cp "$file" "$dir/icons/os_win8.png" ;;
+    ubuntu|linux) cp "$file" "$dir/icons/os_ubuntu.png"; cp "$file" "$dir/icons/os_linux.png" ;;
+    *) echo "unknown slot: $slot (use background|win|ubuntu|linux)" >&2; return 1 ;;
+  esac
+}
+
 # pb_block_write <conf> <timeout> <include>  -- replace the block with these values
 # include may be empty (writes timeout only). File is created if missing.
 pb_block_write() {

@@ -45,6 +45,10 @@ class Window(Gtk.ApplicationWindow):
         self.preview_holder.set_vexpand(True)
         box.append(self.preview_holder)
 
+        bg_drop = Gtk.DropTarget.new(Gio.File, Gdk.DragAction.COPY)
+        bg_drop.connect("drop", self._on_bg_drop)
+        self.preview_holder.add_controller(bg_drop)
+
         self._reload_themes()
         return box
 
@@ -83,6 +87,14 @@ class Window(Gtk.ApplicationWindow):
         path = value.get_path()
         if path:
             self._run(lambda: engine.import_theme(path))
+        return True
+
+    def _on_bg_drop(self, _t, value, _x, _y):
+        row = self.theme_list.get_selected_row()
+        path = value.get_path()
+        if row and path:
+            self._run(lambda: engine.set_asset(row.theme_name, "background", path))
+            self._on_theme_selected(None, row)  # refresh preview
         return True
 
     # --- Settings tab: curated controls ---
