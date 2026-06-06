@@ -6,22 +6,30 @@ PB_END='# <<< prettyboot <<<'
 # Entries (relative to a theme dir) required for a theme to be valid.
 PB_REQUIRED='theme.conf background.png selection_big.png selection_small.png icons'
 
-# pb_validate_theme <themes_dir> <name>
-# Prints what is missing to stderr. Returns 0 if valid, 1 otherwise.
-pb_validate_theme() {
-  local dir="$1/$2" missing="" item
+# pb_validate_theme_dir <dir>  -- validate a theme directory by absolute/relative path.
+pb_validate_theme_dir() {
+  local dir="$1" missing="" item
   if [ ! -d "$dir" ]; then
-    echo "theme '$2' not found" >&2
+    echo "theme dir '$dir' not found" >&2
     return 1
   fi
   for item in $PB_REQUIRED; do
     [ -e "$dir/$item" ] || missing="$missing $item"
   done
   if [ -n "$missing" ]; then
-    echo "theme '$2' missing:$missing" >&2
+    echo "theme '$(basename "$dir")' missing:$missing" >&2
     return 1
   fi
   return 0
+}
+
+# pb_validate_theme <themes_dir> <name>  -- validate themes_dir/name.
+pb_validate_theme() {
+  if [ ! -d "$1/$2" ]; then
+    echo "theme '$2' not found" >&2
+    return 1
+  fi
+  pb_validate_theme_dir "$1/$2"
 }
 
 # pb_list_theme_names <themes_dir>  -> prints theme folder names, one per line, sorted

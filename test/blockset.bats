@@ -42,3 +42,13 @@ teardown() { rm -rf "$TMP"; }
   run pb_block_get "$CONF" timeout
   [ "$output" = "10" ]
 }
+
+@test "validate_theme_dir passes a complete dir and fails a broken one" {
+  make_theme "$TMP/src" good
+  run pb_validate_theme_dir "$TMP/src/good"
+  [ "$status" -eq 0 ]
+  rm "$TMP/src/good/background.png"
+  run pb_validate_theme_dir "$TMP/src/good"
+  [ "$status" -ne 0 ]
+  [[ "$output" == *"background.png"* ]]
+}
