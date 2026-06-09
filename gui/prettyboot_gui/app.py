@@ -160,9 +160,11 @@ class Window(Gtk.ApplicationWindow):
         return grid
 
     def _on_save_settings(self, _btn):
+        timeout = self.timeout_entry.get_text() or "0"
+        res = self.res_entry.get_text().strip()
+
         def work():
-            engine.set_timeout(self.timeout_entry.get_text() or "0")
-            res = self.res_entry.get_text().strip()
+            engine.set_timeout(timeout)
             if res:
                 engine.set_setting("resolution", res)
         self._run(work)
