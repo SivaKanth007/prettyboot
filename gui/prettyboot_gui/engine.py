@@ -77,10 +77,13 @@ def set_asset(theme: str, slot: str, path: str) -> None:
 
 
 def write_conf(text: str) -> None:
-    with tempfile.NamedTemporaryFile("w", suffix=".conf", delete=False) as fh:
-        fh.write(text)
-        tmp = fh.name
-    _write("write-conf", tmp)
+    fd, tmp = tempfile.mkstemp(suffix=".conf")
+    try:
+        with os.fdopen(fd, "w") as fh:
+            fh.write(text)
+        _write("write-conf", tmp)
+    finally:
+        os.unlink(tmp)
 
 
 def has_managed_block() -> bool:

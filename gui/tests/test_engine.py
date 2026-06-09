@@ -1,5 +1,6 @@
 import os
 import subprocess
+import tempfile
 from pathlib import Path
 
 import pytest
@@ -73,3 +74,18 @@ def test_import_zip_with_name(refind, tmp_path):
 def test_write_failure_surfaces_stderr(refind):
     with pytest.raises(RuntimeError, match="not found"):
         engine.set_asset("nope", "background", "/nonexistent/file.png")
+
+
+def test_write_conf_cleans_temp_file(refind, monkeypatch):
+    created = []
+    real = tempfile.mkstemp
+
+    def spy(*a, **k):
+        fd, path = real(*a, **k)
+        created.append(path)
+        return fd, path
+
+    monkeypatch.setattr(engine.tempfile, "mkstemp", spy)
+    engine.write_conf("timeout 5\n")
+    assert (refind / "refind.conf").read_text() == "timeout 5\n"
+    assert created and not os.path.exists(created[0])
