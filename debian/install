@@ -6,3 +6,4 @@ gui/prettyboot_gui           usr/share/prettyboot/
 bin/prettyboot-gui           usr/bin/
 gui/prettyboot.desktop       usr/share/applications/
 gui/com.prettyboot.policy    usr/share/polkit-1/actions/
+assets/prettyboot.png        usr/share/icons/hicolor/256x256/apps/

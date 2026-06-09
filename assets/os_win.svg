@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+  <defs>
+    <linearGradient id="pane" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#5db2ff" stop-opacity="0.96"/>
+      <stop offset="1" stop-color="#0a5fd0" stop-opacity="0.90"/>
+    </linearGradient>
+    <linearGradient id="sheen" x1="0" y1="0" x2="0.6" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.50"/>
+      <stop offset="0.45" stop-color="#ffffff" stop-opacity="0.10"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+    <clipPath id="panes">
+      <rect x="26" y="26" width="97" height="97" rx="16"/>
+      <rect x="133" y="26" width="97" height="97" rx="16"/>
+      <rect x="26" y="133" width="97" height="97" rx="16"/>
+      <rect x="133" y="133" width="97" height="97" rx="16"/>
+    </clipPath>
+    <filter id="soft" x="-25%" y="-25%" width="150%" height="150%">
+      <feDropShadow dx="0" dy="5" stdDeviation="8"
+                    flood-color="#000000" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+  <g filter="url(#soft)">
+    <rect x="26" y="26" width="97" height="97" rx="16" fill="url(#pane)"/>
+    <rect x="133" y="26" width="97" height="97" rx="16" fill="url(#pane)"/>
+    <rect x="26" y="133" width="97" height="97" rx="16" fill="url(#pane)"/>
+    <rect x="133" y="133" width="97" height="97" rx="16" fill="url(#pane)"/>
+  </g>
+  <path d="M0 0 H256 L0 256 Z" fill="url(#sheen)" clip-path="url(#panes)"/>
+  <g fill="none" stroke="#ffffff" stroke-opacity="0.35" stroke-width="2"
+     clip-path="url(#panes)">
+    <rect x="27" y="27" width="95" height="95" rx="15"/>
+    <rect x="134" y="27" width="95" height="95" rx="15"/>
+    <rect x="27" y="134" width="95" height="95" rx="15"/>
+    <rect x="134" y="134" width="95" height="95" rx="15"/>
+  </g>
+</svg>

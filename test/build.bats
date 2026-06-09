@@ -6,6 +6,7 @@ teardown() { rm -rf "$TMP"; }
   command -v convert >/dev/null      || skip "imagemagick not installed"
   command -v rsvg-convert >/dev/null || skip "librsvg2-bin not installed"
   cp "$BATS_TEST_DIRNAME/../build-assets.sh" "$TMP/build-assets.sh"
+  cp -r "$BATS_TEST_DIRNAME/../assets" "$TMP/assets"
   run bash -c "cd '$TMP' && ./build-assets.sh"
   [ "$status" -eq 0 ]
   for t in mac-dark mac-light; do
