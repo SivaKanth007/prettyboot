@@ -42,3 +42,55 @@ def parse_theme_conf(path: str) -> dict:
         elif key in ("banner", "selection_big", "selection_small"):
             conf[key] = val
     return conf
+
+
+# --- geometry constants (CALIBRATED against QEMU screenshots; tweak here) ---
+BIG_ROW_CENTER_Y = 0.50    # big-icon row vertical center, fraction of height
+TILE_GAP = 8               # px between adjacent big tiles (rEFInd TILE_XSPACING)
+LABEL_OFFSET = 24          # px from big-row tile bottom to label top
+SMALL_ROW_OFFSET = 72      # px from big-row tile bottom to small-row top
+SMALL_GAP = 8              # px between small tiles
+
+
+def layout(width: int, height: int, n_big: int, n_small: int,
+           conf: dict, selected: int = 0) -> dict:
+    """Compute pixel rects (x, y, w, h) mirroring rEFInd's menu layout."""
+    big = conf["big_icon_size"]
+    small = conf["small_icon_size"]
+    tile = big * 9 // 8          # selection_big tile, 9/8 of icon (rEFInd rule)
+    stile = small * 4 // 3       # selection_small tile, 4/3 of icon
+
+    # Big row: n_big tiles, centered horizontally; icons centered inside tiles.
+    row_w = n_big * tile + (n_big - 1) * TILE_GAP
+    row_x = (width - row_w) // 2
+    tile_y = int(height * BIG_ROW_CENTER_Y) - tile // 2
+    big_icons = []
+    for i in range(n_big):
+        tx = row_x + i * (tile + TILE_GAP)
+        pad = (tile - big) // 2
+        big_icons.append((tx + pad, tile_y + pad, big, big))
+    sel_x = row_x + selected * (tile + TILE_GAP)
+    selection_big = (sel_x, tile_y, tile, tile)
+
+    # Label: centered on screen, below the big tiles.
+    label = (width // 2, tile_y + tile + LABEL_OFFSET)
+
+    # Small row: centered, below the label area.
+    srow_w = n_small * stile + (n_small - 1) * SMALL_GAP
+    srow_x = (width - srow_w) // 2
+    stile_y = tile_y + tile + SMALL_ROW_OFFSET
+    small_icons = []
+    for i in range(n_small):
+        tx = srow_x + i * (stile + SMALL_GAP)
+        pad = (stile - small) // 2
+        small_icons.append((tx + pad, stile_y + pad, small, small))
+    selection_small = (srow_x, stile_y, stile, stile)
+
+    return {
+        "background": (0, 0, width, height),
+        "big_icons": big_icons,
+        "selection_big": selection_big,
+        "small_icons": small_icons,
+        "selection_small": selection_small,
+        "label": label,
+    }
