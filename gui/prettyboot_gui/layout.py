@@ -46,8 +46,8 @@ def parse_theme_conf(path: str) -> dict:
 # --- geometry constants (CALIBRATED against QEMU screenshots; tweak here) ---
 BIG_ROW_CENTER_Y = 0.50    # big-icon row vertical center, fraction of height
 TILE_GAP = 8               # px between adjacent big tiles (rEFInd TILE_XSPACING)
-LABEL_OFFSET = 24          # px from big-row tile bottom to label top
-SMALL_ROW_OFFSET = 72      # px from big-row tile bottom to small-row top
+LABEL_OFFSET = 16          # px from small-row tile bottom to label top
+SMALL_ROW_OFFSET = 24      # px from big-row tile bottom to small-row top
 SMALL_GAP = 8              # px between small tiles
 
 
@@ -72,10 +72,7 @@ def layout(width: int, height: int, n_big: int, n_small: int,
     sel_x = row_x + selected * (tile + TILE_GAP)
     selection_big = (sel_x, tile_y, tile, tile)
 
-    # Label: centered on screen, below the big tiles.
-    label = (width // 2, tile_y + tile + LABEL_OFFSET)
-
-    # Small row: centered, below the label area.
+    # Small (tools) row: centered, below the big row.
     srow_w = n_small * stile + (n_small - 1) * SMALL_GAP
     srow_x = (width - srow_w) // 2
     stile_y = tile_y + tile + SMALL_ROW_OFFSET
@@ -85,6 +82,9 @@ def layout(width: int, height: int, n_big: int, n_small: int,
         pad = (stile - small) // 2
         small_icons.append((tx + pad, stile_y + pad, small, small))
     selection_small = (srow_x, stile_y, stile, stile)
+
+    # Label: centered on screen, below the small (tools) row.
+    label = (width // 2, stile_y + stile + LABEL_OFFSET)
 
     return {
         "background": (0, 0, width, height),

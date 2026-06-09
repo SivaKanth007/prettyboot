@@ -74,6 +74,12 @@ def test_layout_label_below_big_row_centered():
     assert ty > big_bottom
 
 
+def test_layout_label_below_small_row():
+    out = layout.layout(1024, 768, n_big=2, n_small=6, conf=_conf(), selected=0)
+    small_bottom = max(y + h for _, y, _, h in out["small_icons"])
+    assert out["label"][1] > small_bottom
+
+
 def test_layout_selected_out_of_range_clamped():
     out = layout.layout(1024, 768, n_big=2, n_small=4, conf=_conf(), selected=9)
     assert out["selection_big"] == layout.layout(

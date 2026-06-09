@@ -55,13 +55,37 @@ def _load_surface(path):
 def _load_assets(theme_dir: str) -> dict:
     """Decode all theme surfaces once: background, selection_big, entry icons."""
     bg = theme_assets(theme_dir)["background"]
+    bg_surface = _load_surface(bg) if bg else None
     return {
-        "background": _load_surface(bg) if bg else None,
+        "background": bg_surface,
+        "dark_bg": _is_dark(bg_surface),
         "selection_big": _load_surface(
             os.path.join(theme_dir, "selection_big.png")),
         "entries": [(p, _load_surface(p)) for p in _entry_icons(theme_dir)],
         "conf": L.parse_theme_conf(os.path.join(theme_dir, "theme.conf")),
     }
+
+
+def _is_dark(surface) -> bool:
+    """True when the background's mean luminance < 0.5 (rEFInd draws white
+    text on dark backgrounds, black on light). Defaults True with no bg."""
+    if surface is None:
+        return True
+    data = surface.get_data()
+    stride = surface.get_stride()
+    w, h = surface.get_width(), surface.get_height()
+    total = 0.0
+    n = 0
+    # FORMAT_ARGB32, little-endian -> bytes are B, G, R, A
+    for y in range(0, h, 8):
+        row = y * stride
+        for x in range(0, w * 4, 64 * 4):
+            b = data[row + x]
+            g = data[row + x + 1]
+            r = data[row + x + 2]
+            total += (0.299 * r + 0.587 * g + 0.114 * b) / 255.0
+            n += 1
+    return (total / n) < 0.5 if n else True
 
 
 def _draw_scaled(ctx, surface, x, y, w, h):
@@ -82,7 +106,7 @@ def _paint(ctx, width: int, height: int, assets: dict, selected: int = 0):
     holding pre-decoded surfaces."""
     conf = assets["conf"]
     entries = assets["entries"]
-    n_small = 4  # rEFInd default tools row: shutdown/reboot/firmware/about
+    n_small = 6  # tools row: shell, about, clean-nvram, shutdown, reboot, firmware
     out = L.layout(width, height, max(len(entries), 1), n_small,
                    conf, selected=selected)
     labels = {"os_linux.png": "Ubuntu", "os_win.png": "Windows"}
@@ -103,8 +127,8 @@ def _paint(ctx, width: int, height: int, assets: dict, selected: int = 0):
         if s:
             _draw_scaled(ctx, s, *rect)
 
-    # label under the row (rEFInd auto-picks black/white from bg brightness;
-    # preview approximates with white + slight shadow, fine on both themes)
+    # label under the tools row (rEFInd auto-picks text color from bg
+    # brightness: white-on-dark, black-on-light, with a contrasting shadow)
     if "label" not in conf["hideui"] and entries:
         idx = min(max(selected, 0), len(entries) - 1)
         key = _canon(os.path.basename(entries[idx][0]))
@@ -113,10 +137,14 @@ def _paint(ctx, width: int, height: int, assets: dict, selected: int = 0):
         ctx.set_font_size(max(14, height // 50))
         ext = ctx.text_extents(text)
         cx, ty = out["label"]
-        ctx.set_source_rgba(0, 0, 0, 0.6)
+        if assets.get("dark_bg", True):
+            text_rgb, shadow = (1, 1, 1), (0, 0, 0, 0.6)
+        else:
+            text_rgb, shadow = (0, 0, 0), (1, 1, 1, 0.6)
+        ctx.set_source_rgba(*shadow)
         ctx.move_to(cx - ext.width / 2 + 1, ty + ext.height + 1)
         ctx.show_text(text)
-        ctx.set_source_rgb(1, 1, 1)
+        ctx.set_source_rgb(*text_rgb)
         ctx.move_to(cx - ext.width / 2, ty + ext.height)
         ctx.show_text(text)
 
