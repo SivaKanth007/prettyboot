@@ -57,7 +57,17 @@ class Window(Gtk.ApplicationWindow):
         self.preview_holder = Gtk.Box()
         self.preview_holder.set_hexpand(True)
         self.preview_holder.set_vexpand(True)
-        box.append(self.preview_holder)
+        wrap = Gtk.Overlay()
+        wrap.set_child(self.preview_holder)
+        fs_btn = Gtk.Button(label="⛶")
+        fs_btn.set_tooltip_text("Fullscreen preview (Esc to close)")
+        fs_btn.set_halign(Gtk.Align.END)
+        fs_btn.set_valign(Gtk.Align.START)
+        fs_btn.set_margin_top(6)
+        fs_btn.set_margin_end(6)
+        fs_btn.connect("clicked", self._on_fullscreen)
+        wrap.add_overlay(fs_btn)
+        box.append(wrap)
 
         bg_drop = Gtk.DropTarget.new(Gio.File, Gdk.DragAction.COPY)
         bg_drop.connect("drop", self._on_bg_drop)
@@ -117,6 +127,22 @@ class Window(Gtk.ApplicationWindow):
             self._run(lambda: engine.set_asset(row.theme_name, "background", path),
                       on_done=lambda: self._on_theme_selected(None, row))
         return True
+
+    def _on_fullscreen(self, _btn):
+        row = self.theme_list.get_selected_row()
+        if not row:
+            return
+        win = Gtk.Window(transient_for=self)
+        win.set_child(preview.build_widget(
+            f"{REFIND_DIR}/themes/{row.theme_name}"))
+        key = Gtk.EventControllerKey()
+        key.connect(
+            "key-pressed",
+            lambda _c, val, _code, _state:
+                (win.close() or True) if val == Gdk.KEY_Escape else False)
+        win.add_controller(key)
+        win.fullscreen()
+        win.present()
 
     # --- Settings tab: curated controls ---
     def _settings_tab(self):
