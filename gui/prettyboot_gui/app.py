@@ -1,4 +1,5 @@
 import os
+import threading
 
 import gi
 
@@ -102,8 +103,8 @@ class Window(Gtk.ApplicationWindow):
         row = self.theme_list.get_selected_row()
         path = value.get_path()
         if row and path:
-            self._run(lambda: engine.set_asset(row.theme_name, "background", path))
-            self._on_theme_selected(None, row)  # refresh preview
+            self._run(lambda: engine.set_asset(row.theme_name, "background", path),
+                      on_done=lambda: self._on_theme_selected(None, row))
         return True
 
     # --- Settings tab: curated controls ---
@@ -158,16 +159,28 @@ class Window(Gtk.ApplicationWindow):
         text = buf.get_text(buf.get_start_iter(), buf.get_end_iter(), True)
         self._run(lambda: engine.write_conf(text))
 
-    def _run(self, work):
-        """Run a write op; show any failure in a dialog and refresh the list."""
-        try:
-            work()
-        except Exception as exc:  # subprocess.CalledProcessError etc.
+    def _run(self, work, on_done=None):
+        """Run a write op on a worker thread; report failure in a dialog and
+        refresh the theme list back on the main thread."""
+        def worker():
+            try:
+                work()
+                err = None
+            except Exception as exc:
+                err = str(exc)
+            GLib.idle_add(self._after_run, err, on_done)
+        threading.Thread(target=worker, daemon=True).start()
+
+    def _after_run(self, err, on_done):
+        if err:
             dlg = Gtk.AlertDialog()
             dlg.set_message("Operation failed")
-            dlg.set_detail(str(exc))
+            dlg.set_detail(err)
             dlg.show(self)
+        elif on_done:
+            on_done()
         self._reload_themes()
+        return False
 
 
 class App(Gtk.Application):
