@@ -2,8 +2,14 @@
 GTK-free (testable headless); `build_widget` needs GTK and is imported
 lazily by app.py."""
 import os
+import sys
 
 from . import layout as L
+
+
+def _canon(name: str) -> str:
+    """Canonical icon filename: collapse the os_win8/os_ubuntu duplicate pairs."""
+    return name.replace("os_win8", "os_win").replace("os_ubuntu", "os_linux")
 
 
 def theme_assets(theme_dir: str) -> dict:
@@ -27,8 +33,7 @@ def _entry_icons(theme_dir: str) -> list:
     icons = theme_assets(theme_dir)["icons"]
     seen = {}
     for p in icons:
-        key = os.path.basename(p).replace("os_win8", "os_win").replace(
-            "os_ubuntu", "os_linux")
+        key = _canon(os.path.basename(p))
         seen.setdefault(key, p)
     ordered = []
     for key in ("os_linux.png", "os_win.png"):
@@ -42,8 +47,21 @@ def _load_surface(path):
     import cairo
     try:
         return cairo.ImageSurface.create_from_png(path)
-    except Exception:
+    except (cairo.Error, OSError, MemoryError) as exc:
+        print(f"prettyboot: failed to load {path}: {exc}", file=sys.stderr)
         return None
+
+
+def _load_assets(theme_dir: str) -> dict:
+    """Decode all theme surfaces once: background, selection_big, entry icons."""
+    bg = theme_assets(theme_dir)["background"]
+    return {
+        "background": _load_surface(bg) if bg else None,
+        "selection_big": _load_surface(
+            os.path.join(theme_dir, "selection_big.png")),
+        "entries": [(p, _load_surface(p)) for p in _entry_icons(theme_dir)],
+        "conf": L.parse_theme_conf(os.path.join(theme_dir, "theme.conf")),
+    }
 
 
 def _draw_scaled(ctx, surface, x, y, w, h):
@@ -58,11 +76,12 @@ def _draw_scaled(ctx, surface, x, y, w, h):
     ctx.restore()
 
 
-def _paint(ctx, width: int, height: int, theme_dir: str, selected: int = 0):
+def _paint(ctx, width: int, height: int, assets: dict, selected: int = 0):
     """Paint the simulated rEFInd boot screen onto a cairo context whose
-    user space is width x height pixels."""
-    conf = L.parse_theme_conf(os.path.join(theme_dir, "theme.conf"))
-    entries = _entry_icons(theme_dir)
+    user space is width x height pixels. `assets` is a `_load_assets` result
+    holding pre-decoded surfaces."""
+    conf = assets["conf"]
+    entries = assets["entries"]
     n_small = 4  # rEFInd default tools row: shutdown/reboot/firmware/about
     out = L.layout(width, height, max(len(entries), 1), n_small,
                    conf, selected=selected)
@@ -71,29 +90,24 @@ def _paint(ctx, width: int, height: int, theme_dir: str, selected: int = 0):
     # background (or near-black, rEFInd's default)
     ctx.set_source_rgb(0.02, 0.02, 0.02)
     ctx.paint()
-    bg = theme_assets(theme_dir)["background"]
-    if bg:
-        s = _load_surface(bg)
-        if s:
-            _draw_scaled(ctx, s, 0, 0, width, height)
+    if assets["background"]:
+        _draw_scaled(ctx, assets["background"], 0, 0, width, height)
 
     # selection highlight behind the selected big icon (real rEFInd shows
     # exactly one highlight; at boot it sits on the big row)
-    sel = _load_surface(os.path.join(theme_dir, "selection_big.png"))
-    if sel:
-        _draw_scaled(ctx, sel, *out["selection_big"])
+    if assets["selection_big"]:
+        _draw_scaled(ctx, assets["selection_big"], *out["selection_big"])
 
     # big entry icons
-    for rect, icon in zip(out["big_icons"], entries):
-        s = _load_surface(icon)
+    for rect, (_path, s) in zip(out["big_icons"], entries):
         if s:
             _draw_scaled(ctx, s, *rect)
 
     # label under the row (rEFInd auto-picks black/white from bg brightness;
     # preview approximates with white + slight shadow, fine on both themes)
     if "label" not in conf["hideui"] and entries:
-        key = os.path.basename(entries[min(selected, len(entries) - 1)]).replace(
-            "os_win8", "os_win").replace("os_ubuntu", "os_linux")
+        idx = min(max(selected, 0), len(entries) - 1)
+        key = _canon(os.path.basename(entries[idx][0]))
         text = labels.get(key, "Boot entry")
         ctx.select_font_face("sans")
         ctx.set_font_size(max(14, height // 50))
@@ -126,7 +140,8 @@ def render_png(theme_dir: str, out_path: str,
     """Headless render to PNG — used for calibration against QEMU shots."""
     import cairo
     surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, width, height)
-    _paint(cairo.Context(surface), width, height, theme_dir, selected)
+    _paint(cairo.Context(surface), width, height,
+           _load_assets(theme_dir), selected)
     surface.write_to_png(out_path)
 
 
@@ -139,6 +154,7 @@ def build_widget(theme_dir: str):
     from gi.repository import Gtk
 
     VW, VH = 1920, 1080
+    assets = _load_assets(theme_dir)
 
     def draw(_area, ctx, w, h):
         scale = min(w / VW, h / VH)
@@ -146,7 +162,7 @@ def build_widget(theme_dir: str):
         ctx.scale(scale, scale)
         ctx.rectangle(0, 0, VW, VH)
         ctx.clip()
-        _paint(ctx, VW, VH, theme_dir)
+        _paint(ctx, VW, VH, assets)
 
     area = Gtk.DrawingArea()
     area.set_hexpand(True)
