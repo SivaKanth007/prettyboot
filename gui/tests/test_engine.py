@@ -57,3 +57,14 @@ def test_import_zip(refind, tmp_path):
             z.write(p, p.relative_to(tmp_path / "pack"))
     engine.import_path(str(zpath))
     assert "zipped" in [n for n, _, _ in engine.list_themes()]
+
+
+def test_import_zip_with_name(refind, tmp_path):
+    theme = _make_theme(tmp_path / "pack", "original")
+    zpath = tmp_path / "original.zip"
+    with zipfile.ZipFile(zpath, "w") as z:
+        for p in theme.rglob("*"):
+            z.write(p, p.relative_to(tmp_path / "pack"))
+    engine.import_path(str(zpath), name="renamed")
+    themes = {n: valid for n, _, valid in engine.list_themes()}
+    assert themes.get("renamed") is True

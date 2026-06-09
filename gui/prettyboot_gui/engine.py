@@ -97,7 +97,7 @@ def import_path(path: str, name: str | None = None) -> None:
             z.extractall(tmp)
         entries = [os.path.join(tmp, e) for e in os.listdir(tmp)]
         dirs = [e for e in entries if os.path.isdir(e)]
-        src = dirs[0] if len(dirs) == 1 and not name else tmp
+        src = dirs[0] if len(dirs) == 1 else tmp
         import_theme(src, name)
     else:
         import_theme(path, name)
