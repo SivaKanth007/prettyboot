@@ -1,3 +1,5 @@
+import os
+
 import gi
 
 gi.require_version("Gtk", "4.0")
@@ -5,7 +7,8 @@ from gi.repository import Gtk, Gdk, Gio, GLib  # noqa: E402
 
 from . import engine, preview  # noqa: E402
 
-REFIND_DIR = "/boot/efi/EFI/refind"
+# Honor REFIND_DIR like the CLI does, so the GUI can run against a sandbox.
+REFIND_DIR = os.environ.get("REFIND_DIR", "/boot/efi/EFI/refind")
 
 
 class Window(Gtk.ApplicationWindow):
