@@ -68,3 +68,8 @@ def test_import_zip_with_name(refind, tmp_path):
     engine.import_path(str(zpath), name="renamed")
     themes = {n: valid for n, _, valid in engine.list_themes()}
     assert themes.get("renamed") is True
+
+
+def test_write_failure_surfaces_stderr(refind):
+    with pytest.raises(RuntimeError, match="not found"):
+        engine.set_asset("nope", "background", "/nonexistent/file.png")

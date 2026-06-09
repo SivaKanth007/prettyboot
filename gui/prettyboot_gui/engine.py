@@ -25,7 +25,10 @@ def _read(*args: str) -> str:
 def _write(*args: str) -> None:
     pkexec = os.environ.get("PRETTYBOOT_PKEXEC", "pkexec")
     cmd = ([pkexec] if pkexec else []) + [_bin(), *args]
-    subprocess.run(cmd, check=True)
+    out = subprocess.run(cmd, capture_output=True, text=True)
+    if out.returncode != 0:
+        msg = out.stderr.strip() or f"exit status {out.returncode}"
+        raise RuntimeError(msg)
 
 
 def list_themes() -> list[tuple[str, bool, bool]]:
