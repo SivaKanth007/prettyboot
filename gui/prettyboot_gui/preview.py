@@ -67,25 +67,33 @@ def _load_assets(theme_dir: str) -> dict:
 
 
 def _is_dark(surface) -> bool:
-    """True when the background's mean luminance < 0.5 (rEFInd draws white
-    text on dark backgrounds, black on light). Defaults True with no bg."""
+    """Mean luminance of a surface < 0.5? Compositing onto a small ARGB32
+    scratch first normalizes whatever pixel format cairo decoded the PNG
+    into (e.g. RGB96F for 16-bit PNGs) and flattens alpha over black."""
     if surface is None:
         return True
-    data = surface.get_data()
-    stride = surface.get_stride()
-    w, h = surface.get_width(), surface.get_height()
+    import cairo
+    sw, sh = surface.get_width(), surface.get_height()
+    if sw == 0 or sh == 0:
+        return True
+    w, h = 32, 18
+    scratch = cairo.ImageSurface(cairo.FORMAT_ARGB32, w, h)
+    ctx = cairo.Context(scratch)
+    ctx.set_source_rgb(0, 0, 0)
+    ctx.paint()
+    ctx.scale(w / sw, h / sh)
+    ctx.set_source_surface(surface, 0, 0)
+    ctx.paint()
+    scratch.flush()
+    data = scratch.get_data()
+    stride = scratch.get_stride()
     total = 0.0
-    n = 0
-    # FORMAT_ARGB32, little-endian -> bytes are B, G, R, A
-    for y in range(0, h, 8):
+    for y in range(h):
         row = y * stride
-        for x in range(0, w * 4, 64 * 4):
-            b = data[row + x]
-            g = data[row + x + 1]
-            r = data[row + x + 2]
-            total += (0.299 * r + 0.587 * g + 0.114 * b) / 255.0
-            n += 1
-    return (total / n) < 0.5 if n else True
+        for x in range(w):
+            b, g, r = data[row + x * 4], data[row + x * 4 + 1], data[row + x * 4 + 2]
+            total += 0.2126 * r + 0.7152 * g + 0.0722 * b
+    return total / (w * h * 255) < 0.5
 
 
 def _draw_scaled(ctx, surface, x, y, w, h):

@@ -52,3 +52,22 @@ def test_render_png(tmp_path):
     from prettyboot_gui import preview
     preview.render_png(str(d), str(out), 1024, 768)
     assert out.stat().st_size > 0
+
+
+def test_is_dark_classification(tmp_path):
+    import cairo
+    from prettyboot_gui import preview
+
+    def solid_png(path, r, g, b):
+        s = cairo.ImageSurface(cairo.FORMAT_ARGB32, 64, 64)
+        c = cairo.Context(s)
+        c.set_source_rgb(r, g, b)
+        c.paint()
+        s.write_to_png(str(path))
+
+    solid_png(tmp_path / "dark.png", 0.2, 0.2, 0.2)
+    solid_png(tmp_path / "light.png", 0.9, 0.9, 0.9)
+    assert preview._is_dark(
+        cairo.ImageSurface.create_from_png(str(tmp_path / "dark.png"))) is True
+    assert preview._is_dark(
+        cairo.ImageSurface.create_from_png(str(tmp_path / "light.png"))) is False
