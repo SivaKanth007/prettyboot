@@ -44,9 +44,13 @@ class Window(Gtk.ApplicationWindow):
         rail.append(apply_btn)
 
         if not engine.has_managed_block():
-            banner = Gtk.Button(label="Set up boot menu")
-            banner.connect("clicked", lambda _b: self._run(engine.setup_boot))
-            rail.prepend(banner)
+            self.setup_banner = Gtk.Button(label="Set up boot menu")
+            self.setup_banner.connect(
+                "clicked",
+                lambda _b: self._run(
+                    engine.setup_boot,
+                    on_done=lambda: self.setup_banner.set_visible(False)))
+            rail.prepend(self.setup_banner)
 
         box.append(rail)
 
