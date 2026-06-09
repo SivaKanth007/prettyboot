@@ -15,6 +15,7 @@ REFIND_DIR = os.environ.get("REFIND_DIR", "/boot/efi/EFI/refind")
 class Window(Gtk.ApplicationWindow):
     def __init__(self, app):
         super().__init__(application=app, title="prettyboot")
+        self._busy = False
         self.set_default_size(900, 560)
         notebook = Gtk.Notebook()
         self.set_child(notebook)
@@ -100,7 +101,8 @@ class Window(Gtk.ApplicationWindow):
     def _on_apply(self, _btn):
         row = self.theme_list.get_selected_row()
         if row:
-            self._run(lambda: engine.use_theme(row.theme_name))
+            name = row.theme_name
+            self._run(lambda: engine.use_theme(name))
 
     def _enable_drop(self, widget):
         target = Gtk.DropTarget.new(Gio.File, Gdk.DragAction.COPY)
@@ -124,7 +126,8 @@ class Window(Gtk.ApplicationWindow):
             dlg.show(self)
             return True
         if path:
-            self._run(lambda: engine.set_asset(row.theme_name, "background", path),
+            name = row.theme_name
+            self._run(lambda: engine.set_asset(name, "background", path),
                       on_done=lambda: self._on_theme_selected(None, row))
         return True
 
@@ -201,6 +204,9 @@ class Window(Gtk.ApplicationWindow):
     def _run(self, work, on_done=None):
         """Run a write op on a worker thread; report failure in a dialog and
         refresh the theme list back on the main thread."""
+        if self._busy:
+            return
+        self._busy = True
         def worker():
             try:
                 work()
@@ -211,6 +217,7 @@ class Window(Gtk.ApplicationWindow):
         threading.Thread(target=worker, daemon=True).start()
 
     def _after_run(self, err, on_done):
+        self._busy = False
         if err:
             dlg = Gtk.AlertDialog()
             dlg.set_message("Operation failed")
