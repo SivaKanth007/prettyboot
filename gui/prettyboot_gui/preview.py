@@ -1,6 +1,9 @@
-"""Builds the live boot-menu preview. `theme_assets` is pure (testable);
-`build_widget` needs GTK and is imported lazily by app.py."""
+"""Boot-menu preview rendering. `theme_assets` and the cairo painters are
+GTK-free (testable headless); `build_widget` needs GTK and is imported
+lazily by app.py."""
 import os
+
+from . import layout as L
 
 
 def theme_assets(theme_dir: str) -> dict:
@@ -18,36 +21,135 @@ def theme_assets(theme_dir: str) -> dict:
     }
 
 
+def _entry_icons(theme_dir: str) -> list:
+    """Big-row entry icons: collapse the os_win/os_win8 and os_linux/os_ubuntu
+    duplicate pairs, prefer linux first then windows (the dual-boot case)."""
+    icons = theme_assets(theme_dir)["icons"]
+    seen = {}
+    for p in icons:
+        key = os.path.basename(p).replace("os_win8", "os_win").replace(
+            "os_ubuntu", "os_linux")
+        seen.setdefault(key, p)
+    ordered = []
+    for key in ("os_linux.png", "os_win.png"):
+        if key in seen:
+            ordered.append(seen.pop(key))
+    ordered.extend(seen.values())
+    return ordered
+
+
+def _load_surface(path):
+    import cairo
+    try:
+        return cairo.ImageSurface.create_from_png(path)
+    except Exception:
+        return None
+
+
+def _draw_scaled(ctx, surface, x, y, w, h):
+    sw, sh = surface.get_width(), surface.get_height()
+    if sw == 0 or sh == 0:
+        return
+    ctx.save()
+    ctx.translate(x, y)
+    ctx.scale(w / sw, h / sh)
+    ctx.set_source_surface(surface, 0, 0)
+    ctx.paint()
+    ctx.restore()
+
+
+def _paint(ctx, width: int, height: int, theme_dir: str, selected: int = 0):
+    """Paint the simulated rEFInd boot screen onto a cairo context whose
+    user space is width x height pixels."""
+    conf = L.parse_theme_conf(os.path.join(theme_dir, "theme.conf"))
+    entries = _entry_icons(theme_dir)
+    n_small = 4  # rEFInd default tools row: shutdown/reboot/firmware/about
+    out = L.layout(width, height, max(len(entries), 1), n_small,
+                   conf, selected=selected)
+    labels = {"os_linux.png": "Ubuntu", "os_win.png": "Windows"}
+
+    # background (or near-black, rEFInd's default)
+    ctx.set_source_rgb(0.02, 0.02, 0.02)
+    ctx.paint()
+    bg = theme_assets(theme_dir)["background"]
+    if bg:
+        s = _load_surface(bg)
+        if s:
+            _draw_scaled(ctx, s, 0, 0, width, height)
+
+    # selection highlight behind the selected big icon (real rEFInd shows
+    # exactly one highlight; at boot it sits on the big row)
+    sel = _load_surface(os.path.join(theme_dir, "selection_big.png"))
+    if sel:
+        _draw_scaled(ctx, sel, *out["selection_big"])
+
+    # big entry icons
+    for rect, icon in zip(out["big_icons"], entries):
+        s = _load_surface(icon)
+        if s:
+            _draw_scaled(ctx, s, *rect)
+
+    # label under the row (rEFInd auto-picks black/white from bg brightness;
+    # preview approximates with white + slight shadow, fine on both themes)
+    if "label" not in conf["hideui"] and entries:
+        key = os.path.basename(entries[min(selected, len(entries) - 1)]).replace(
+            "os_win8", "os_win").replace("os_ubuntu", "os_linux")
+        text = labels.get(key, "Boot entry")
+        ctx.select_font_face("sans")
+        ctx.set_font_size(max(14, height // 50))
+        ext = ctx.text_extents(text)
+        cx, ty = out["label"]
+        ctx.set_source_rgba(0, 0, 0, 0.6)
+        ctx.move_to(cx - ext.width / 2 + 1, ty + ext.height + 1)
+        ctx.show_text(text)
+        ctx.set_source_rgb(1, 1, 1)
+        ctx.move_to(cx - ext.width / 2, ty + ext.height)
+        ctx.show_text(text)
+
+    # small tools row: neutral placeholder outlines (rEFInd built-in icons)
+    if "tools" not in conf["hideui"]:
+        for x, y, w, h in out["small_icons"]:
+            ctx.set_source_rgba(1, 1, 1, 0.35)
+            r = 6
+            ctx.new_sub_path()
+            ctx.arc(x + w - r, y + r, r, -1.5708, 0)
+            ctx.arc(x + w - r, y + h - r, r, 0, 1.5708)
+            ctx.arc(x + r, y + h - r, r, 1.5708, 3.1416)
+            ctx.arc(x + r, y + r, r, 3.1416, 4.7124)
+            ctx.close_path()
+            ctx.set_line_width(2)
+            ctx.stroke()
+
+
+def render_png(theme_dir: str, out_path: str,
+               width: int = 1024, height: int = 768, selected: int = 0):
+    """Headless render to PNG — used for calibration against QEMU shots."""
+    import cairo
+    surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, width, height)
+    _paint(cairo.Context(surface), width, height, theme_dir, selected)
+    surface.write_to_png(out_path)
+
+
 def build_widget(theme_dir: str):
-    """Return a Gtk.Picture-based 16:9 preview overlaying OS icons on the
-    background. Imported lazily so non-GTK tests can import this module's
-    pure helpers."""
+    """Return a Gtk.DrawingArea that paints the simulated boot screen at a
+    virtual 1920x1080 canvas, scaled to fit the widget. Imported lazily so
+    non-GTK tests can import this module's pure helpers."""
     import gi
     gi.require_version("Gtk", "4.0")
-    from gi.repository import Gtk, Gdk
+    from gi.repository import Gtk
 
-    assets = theme_assets(theme_dir)
-    overlay = Gtk.Overlay()
-    overlay.set_size_request(640, 360)  # 16:9
+    VW, VH = 1920, 1080
 
-    if assets["background"]:
-        bg = Gtk.Picture.new_for_filename(assets["background"])
-        bg.set_content_fit(Gtk.ContentFit.COVER)
-        overlay.set_child(bg)
+    def draw(_area, ctx, w, h):
+        scale = min(w / VW, h / VH)
+        ctx.translate((w - VW * scale) / 2, (h - VH * scale) / 2)
+        ctx.scale(scale, scale)
+        ctx.rectangle(0, 0, VW, VH)
+        ctx.clip()
+        _paint(ctx, VW, VH, theme_dir)
 
-    row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=40)
-    row.set_halign(Gtk.Align.CENTER)
-    row.set_valign(Gtk.Align.CENTER)
-    seen = set()
-    for icon in assets["icons"]:
-        # collapse the os_win/os_win8 and os_linux/os_ubuntu duplicate pairs
-        key = os.path.basename(icon).replace("os_win8", "os_win").replace(
-            "os_ubuntu", "os_linux")
-        if key in seen:
-            continue
-        seen.add(key)
-        pic = Gtk.Picture.new_for_filename(icon)
-        pic.set_size_request(96, 96)
-        row.append(pic)
-    overlay.add_overlay(row)
-    return overlay
+    area = Gtk.DrawingArea()
+    area.set_hexpand(True)
+    area.set_vexpand(True)
+    area.set_draw_func(draw)
+    return area

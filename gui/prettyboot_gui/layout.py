@@ -4,7 +4,6 @@ No GTK imports here — everything is unit-testable. The numeric constants
 are calibrated against real rEFInd screenshots captured in QEMU+OVMF
 (see test/vm/capture.sh and docs/calibration/).
 """
-import os
 
 _DEFAULTS = {
     "banner": None,
@@ -57,6 +56,7 @@ def layout(width: int, height: int, n_big: int, n_small: int,
     """Compute pixel rects (x, y, w, h) mirroring rEFInd's menu layout."""
     big = conf["big_icon_size"]
     small = conf["small_icon_size"]
+    selected = min(max(selected, 0), n_big - 1)
     tile = big * 9 // 8          # selection_big tile, 9/8 of icon (rEFInd rule)
     stile = small * 4 // 3       # selection_small tile, 4/3 of icon
 
