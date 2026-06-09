@@ -106,7 +106,14 @@ class Window(Gtk.ApplicationWindow):
     def _on_bg_drop(self, _t, value, _x, _y):
         row = self.theme_list.get_selected_row()
         path = value.get_path()
-        if row and path:
+        if not row:
+            dlg = Gtk.AlertDialog()
+            dlg.set_message("Select a theme first")
+            dlg.set_detail("Pick the theme that should get this background, "
+                           "then drop the image again.")
+            dlg.show(self)
+            return True
+        if path:
             self._run(lambda: engine.set_asset(row.theme_name, "background", path),
                       on_done=lambda: self._on_theme_selected(None, row))
         return True
