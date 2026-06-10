@@ -50,21 +50,28 @@ def scan_entries(efi_root: str, refind_dir: str, volume: str) -> list:
         return []
     suffix = f" from {volume}" if volume else ""
     entries = []
-    saw_linux = False
+    saw_linux = False  # spans directories: _dir_sort_key scans Boot last so
+    # the fallback copy is classified after the real distro loader is seen
     for d in dirs:
         droot = os.path.join(efi_root, d)
         if not os.path.isdir(droot) or os.path.realpath(droot) == refind_real:
             continue
         loaders = []
-        for sub, _dirs, files in os.walk(droot):
+        for _sub, dirs, files in os.walk(droot):
+            dirs.sort()
             for fn in sorted(files):
                 if fn.lower().endswith(".efi") and not _skip_file(fn):
                     loaders.append(fn)
+        if any(fn.lower() == "bootmgfw.efi" for fn in loaders):
+            # the Microsoft tree boots only through bootmgfw.efi; the other
+            # .efi files there (cbmr_driver, SecureBootRecovery, ...) are
+            # support binaries rEFInd never lists
+            loaders = [fn for fn in loaders if fn.lower() == "bootmgfw.efi"]
         names = {fn.lower() for fn in loaders}
         for fn in loaders:
             if fn.lower().startswith("grub") and any(
                     n.startswith("shim") for n in names):
-                continue  # shim supersedes grub in the same directory
+                continue  # shim supersedes grub in the same top-level directory tree
             key, desc = _classify(d, fn, saw_linux)
             if key == "linux":
                 saw_linux = True

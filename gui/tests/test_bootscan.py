@@ -14,6 +14,8 @@ def _fake_esp(tmp_path: Path) -> Path:
     _touch(efi / "Microsoft" / "Boot" / "bootmgfw.efi")
     _touch(efi / "Microsoft" / "Boot" / "bootmgr.efi")
     _touch(efi / "Microsoft" / "Boot" / "memtest.efi")
+    _touch(efi / "Microsoft" / "Boot" / "cbmr_driver.efi")
+    _touch(efi / "Microsoft" / "Boot" / "SecureBootRecovery.efi")
     _touch(efi / "ubuntu" / "shimx64.efi")
     _touch(efi / "ubuntu" / "grubx64.efi")
     _touch(efi / "ubuntu" / "mmx64.efi")
@@ -21,6 +23,7 @@ def _fake_esp(tmp_path: Path) -> Path:
     _touch(efi / "Boot" / "fbx64.efi")
     _touch(efi / "Boot" / "mmx64.efi")
     _touch(efi / "refind" / "refind_x64.efi")
+    _touch(efi / "refind" / "drivers_x64" / "ext4_x64.efi")
     for icon in ("os_unknown.png", "func_about.png", "func_hidden.png",
                  "func_shutdown.png", "func_reset.png", "func_firmware.png",
                  "tool_mok_tool.png"):
@@ -47,6 +50,7 @@ def test_scan_entries_excludes_refind_and_tools(tmp_path):
     assert "bootmgr " not in labels.lower()    # only bootmgfw for Microsoft
     assert "memtest" not in labels.lower()
     assert "grub" not in labels.lower()        # shim supersedes grub
+    assert len(entries) == 4
 
 
 def test_scan_entries_no_volume_label(tmp_path):
