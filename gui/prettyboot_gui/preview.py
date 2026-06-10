@@ -55,6 +55,7 @@ def _real_boot_assets(theme_dir: str):
     """Scan the live ESP this theme sits on; None when not on an ESP.
     Returns (entries, tools): entries = [(label, icon_path-or-None)],
     tools = [icon_path]."""
+    theme_dir = os.path.normpath(theme_dir)
     refind_dir = os.path.dirname(os.path.dirname(theme_dir))
     efi_root = os.path.dirname(refind_dir)
     if os.path.basename(efi_root).upper() != "EFI" \
@@ -66,13 +67,17 @@ def _real_boot_assets(theme_dir: str):
         return None
     icon_for = {
         "win": [os.path.join(theme_dir, "icons", "os_win8.png"),
-                os.path.join(theme_dir, "icons", "os_win.png")],
-        "linux": [os.path.join(theme_dir, "icons", "os_linux.png")],
+                os.path.join(theme_dir, "icons", "os_win.png"),
+                os.path.join(refind_dir, "icons", "os_win.png")],
+        "linux": [os.path.join(theme_dir, "icons", "os_linux.png"),
+                  os.path.join(theme_dir, "icons", "os_ubuntu.png"),
+                  os.path.join(refind_dir, "icons", "os_linux.png")],
         "unknown": [os.path.join(refind_dir, "icons", "os_unknown.png")],
     }
     entries = []
     for e in raw:
-        icon = next((c for c in icon_for[e["key"]] if os.path.isfile(c)), None)
+        icon = next((c for c in icon_for.get(e["key"], icon_for["unknown"])
+                     if os.path.isfile(c)), None)
         entries.append((e["label"], icon))
     return entries, bootscan.scan_tools(efi_root, refind_dir)
 
@@ -90,8 +95,8 @@ def _load_assets(theme_dir: str) -> dict:
     """Decode all surfaces once: background, selection, entries, tools.
     Entries come from the live ESP when the theme sits on one (the preview
     then replicates the user's actual boot menu); otherwise a simulated
-    dual-boot menu. `tools` is None in the simulated case (drawn as
-    outline placeholders)."""
+    dual-boot menu. `tools` is None in the simulated case and may be empty
+    if the ESP has no icon files; both draw outline placeholders."""
     real = _real_boot_assets(theme_dir)
     if real:
         raw_entries, tool_paths = real
@@ -157,9 +162,9 @@ def _draw_scaled(ctx, surface, x, y, w, h):
 
 
 def _paint(ctx, width: int, height: int, assets: dict, selected: int = 0):
-    """Paint the simulated rEFInd boot screen onto a cairo context whose
-    user space is width x height pixels. `assets` is a `_load_assets` result
-    holding pre-decoded surfaces."""
+    """Paint the rEFInd boot screen (real ESP scan or simulated fallback)
+    onto a cairo context whose user space is width x height pixels. `assets`
+    is a `_load_assets` result holding pre-decoded surfaces."""
     conf = assets["conf"]
     entries = assets["entries"]
     tools = assets["tools"]
@@ -234,7 +239,7 @@ def render_png(theme_dir: str, out_path: str,
 
 
 def build_widget(theme_dir: str):
-    """Return a Gtk.DrawingArea that paints the simulated boot screen at a
+    """Return a Gtk.DrawingArea that paints the boot-screen preview at a
     virtual 1920x1080 canvas, scaled to fit the widget. Imported lazily so
     non-GTK tests can import this module's pure helpers."""
     import gi

@@ -109,6 +109,10 @@ def test_load_assets_uses_real_scan(tmp_path):
     assert len(labels) == 4
     assert labels[0].startswith("Boot Microsoft EFI boot")
     assert assets["tools"] is not None and len(assets["tools"]) == 6
+    # icon resolution: win entry gets the theme's os_win8, unknown entry
+    # gets the ESP's stock os_unknown — neither may be blank
+    assert assets["entries"][0][1] is not None
+    assert assets["entries"][3][1] is not None
     out = tmp_path / "shot.png"
     preview.render_png(str(theme), str(out), 1024, 768)
     assert out.stat().st_size > 0

@@ -54,7 +54,8 @@ def scan_entries(efi_root: str, refind_dir: str, volume: str) -> list:
     # the fallback copy is classified after the real distro loader is seen
     for d in dirs:
         droot = os.path.join(efi_root, d)
-        if not os.path.isdir(droot) or os.path.realpath(droot) == refind_real:
+        if not os.path.isdir(droot) or os.path.realpath(droot) == refind_real \
+                or d.lower() == "tools":
             continue
         loaders = []
         for _sub, dirs, files in os.walk(droot):

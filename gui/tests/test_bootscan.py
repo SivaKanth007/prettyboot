@@ -81,5 +81,12 @@ def test_scan_tools_skips_missing_icons(tmp_path):
     assert "func_hidden.png" not in names
 
 
+def test_scan_entries_skips_tools_dir(tmp_path):
+    efi = _fake_esp(tmp_path)
+    _touch(efi / "tools" / "shellx64.efi")
+    entries = bootscan.scan_entries(str(efi), str(efi / "refind"), "SYSTEM")
+    assert len(entries) == 4  # the shell is a tools-row item, not an entry
+
+
 def test_volume_label_failure_is_empty(tmp_path):
     assert bootscan.volume_label(str(tmp_path / "not-a-mountpoint")) == ""
