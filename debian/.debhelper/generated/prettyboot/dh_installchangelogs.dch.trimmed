@@ -1,0 +1,5 @@
+prettyboot (1.0.0) jammy; urgency=medium
+
+  * Initial release: CLI + GTK4 GUI, theme import, curated/raw settings.
+
+ -- SivaKanth007 <dtavvala@asu.edu>  Fri, 05 Jun 2026 00:00:00 +0000

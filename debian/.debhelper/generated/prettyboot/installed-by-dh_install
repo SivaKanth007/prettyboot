@@ -1,0 +1,9 @@
+./lib.sh
+./prettyboot.sh
+./install.sh
+./themes
+./gui/prettyboot_gui
+./bin/prettyboot-gui
+./gui/prettyboot.desktop
+./gui/com.prettyboot.policy
+./assets/prettyboot.png
