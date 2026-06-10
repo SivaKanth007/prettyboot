@@ -1,4 +1,4 @@
-prettyboot (1.1.0) jammy; urgency=medium
+prettyboot (1.1.0) resolute; urgency=medium
 
   * Preview replicates the real boot menu: entries and tools scanned live
     from the ESP (real labels, real rEFInd tool icons), simulated fallback
