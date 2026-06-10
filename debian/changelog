@@ -1,3 +1,13 @@
+prettyboot (1.1.0) jammy; urgency=medium
+
+  * Preview replicates the real boot menu: entries and tools scanned live
+    from the ESP (real labels, real rEFInd tool icons), simulated fallback
+    elsewhere.
+  * Liquid-glass selection tiles; OS logos inset to ~2/3 of the tile.
+  * Glassmorphism icon set and shipped desktop app icon.
+
+ -- SivaKanth007 <dtavvala@asu.edu>  Wed, 10 Jun 2026 08:52:00 +0000
+
 prettyboot (1.0.0) jammy; urgency=medium
 
   * Initial release: CLI + GTK4 GUI, theme import, curated/raw settings.
