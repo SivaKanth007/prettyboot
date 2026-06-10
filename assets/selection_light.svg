@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 144 144">
+  <!-- Liquid-glass selection tile for light backgrounds: subtle smoked glass
+       with a bright rim, top reflection band and soft inner shadow so the
+       tile reads as raised glass on pale wallpapers. -->
+  <defs>
+    <linearGradient id="fill" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.55"/>
+      <stop offset="0.4" stop-color="#5b6470" stop-opacity="0.10"/>
+      <stop offset="1" stop-color="#3a414c" stop-opacity="0.18"/>
+    </linearGradient>
+    <linearGradient id="rim" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.95"/>
+      <stop offset="0.35" stop-color="#ffffff" stop-opacity="0.50"/>
+      <stop offset="1" stop-color="#2c333d" stop-opacity="0.40"/>
+    </linearGradient>
+    <linearGradient id="topsheen" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.65"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+    <clipPath id="tile"><rect x="3" y="3" width="138" height="138" rx="30"/></clipPath>
+    <filter id="blur2"><feGaussianBlur stdDeviation="2"/></filter>
+    <filter id="blur5"><feGaussianBlur stdDeviation="5"/></filter>
+  </defs>
+
+  <rect x="3" y="3" width="138" height="138" rx="30" fill="url(#fill)"/>
+
+  <g clip-path="url(#tile)">
+    <path d="M3 3 H141 V34 Q72 52 3 34 Z" fill="url(#topsheen)" filter="url(#blur2)"/>
+    <rect x="86" y="-30" width="16" height="120" rx="8"
+          transform="rotate(24 100 30)" fill="#ffffff" opacity="0.22"
+          filter="url(#blur2)"/>
+    <ellipse cx="72" cy="143" rx="58" ry="12" fill="#2c333d" opacity="0.18"
+             filter="url(#blur5)"/>
+  </g>
+
+  <rect x="4.5" y="4.5" width="135" height="135" rx="28.5" fill="none"
+        stroke="url(#rim)" stroke-width="2.5"/>
+</svg>

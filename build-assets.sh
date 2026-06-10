@@ -16,16 +16,12 @@ convert -size ${W}x${H} radial-gradient:'#1c1430'-'#020103' "$md/background.png"
 # rEFInd draws the per-icon selection highlight. Kept light so auto text = black.
 convert -size ${W}x${H} gradient:'#fde7d6'-'#c7dbf0' "$ml/background.png"
 
-# --- selection highlights ---
+# --- selection highlights: liquid-glass tiles from assets/selection_*.svg ---
 # sizes per rEFInd docs: selection_big = 9/8 of 128 icon (144), small = 4/3 of 48 (64)
-convert -size 144x144 xc:none -fill 'rgba(255,255,255,0.16)' \
-  -draw 'roundrectangle 6,6,138,138,26,26' "$md/selection_big.png"
-convert -size 64x64 xc:none -fill 'rgba(255,255,255,0.16)' \
-  -draw 'roundrectangle 4,4,60,60,14,14' "$md/selection_small.png"
-convert -size 144x144 xc:none -fill 'rgba(0,0,0,0.14)' \
-  -draw 'roundrectangle 6,6,138,138,26,26' "$ml/selection_big.png"
-convert -size 64x64 xc:none -fill 'rgba(0,0,0,0.14)' \
-  -draw 'roundrectangle 4,4,60,60,14,14' "$ml/selection_small.png"
+rsvg-convert -w 144 -h 144 "$here/assets/selection_dark.svg"  -o "$md/selection_big.png"
+rsvg-convert -w 64  -h 64  "$here/assets/selection_dark.svg"  -o "$md/selection_small.png"
+rsvg-convert -w 144 -h 144 "$here/assets/selection_light.svg" -o "$ml/selection_big.png"
+rsvg-convert -w 64  -h 64  "$here/assets/selection_light.svg" -o "$ml/selection_small.png"
 
 # --- icons: glass set rendered from assets/*.svg (Microsoft-Authenticator-style
 # glassmorphism: gradient base, diagonal sheen, edge highlight, soft shadow) ---

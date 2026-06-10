@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 144 144">
+  <!-- Liquid-glass selection tile for dark backgrounds: translucent white
+       glass with rim light, top reflection band and pooled light at the
+       bottom edge (static stand-in for reflection/refraction). -->
+  <defs>
+    <linearGradient id="fill" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.30"/>
+      <stop offset="0.45" stop-color="#ffffff" stop-opacity="0.07"/>
+      <stop offset="0.85" stop-color="#ffffff" stop-opacity="0.10"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0.18"/>
+    </linearGradient>
+    <linearGradient id="rim" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.95"/>
+      <stop offset="0.3" stop-color="#ffffff" stop-opacity="0.35"/>
+      <stop offset="0.85" stop-color="#ffffff" stop-opacity="0.30"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0.65"/>
+    </linearGradient>
+    <linearGradient id="topsheen" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.40"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+    <clipPath id="tile"><rect x="3" y="3" width="138" height="138" rx="30"/></clipPath>
+    <filter id="blur2"><feGaussianBlur stdDeviation="2"/></filter>
+    <filter id="blur5"><feGaussianBlur stdDeviation="5"/></filter>
+  </defs>
+
+  <rect x="3" y="3" width="138" height="138" rx="30" fill="url(#fill)"/>
+
+  <g clip-path="url(#tile)">
+    <!-- top reflection band -->
+    <path d="M3 3 H141 V34 Q72 52 3 34 Z" fill="url(#topsheen)" filter="url(#blur2)"/>
+    <!-- diagonal caustic streak -->
+    <rect x="86" y="-30" width="16" height="120" rx="8"
+          transform="rotate(24 100 30)" fill="#ffffff" opacity="0.16"
+          filter="url(#blur2)"/>
+    <!-- pooled light along the bottom edge (refraction cue) -->
+    <ellipse cx="72" cy="143" rx="58" ry="12" fill="#ffffff" opacity="0.30"
+             filter="url(#blur5)"/>
+  </g>
+
+  <!-- rim light -->
+  <rect x="4.5" y="4.5" width="135" height="135" rx="28.5" fill="none"
+        stroke="url(#rim)" stroke-width="2.5"/>
+</svg>
