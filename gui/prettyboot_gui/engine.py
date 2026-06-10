@@ -6,6 +6,7 @@ as root. Both are overridable via env for testing:
   PRETTYBOOT_PKEXEC  privilege wrapper (default: "pkexec"; empty = none)
 """
 import os
+import shutil
 import subprocess
 import tempfile
 import zipfile
@@ -99,11 +100,14 @@ def import_path(path: str, name: str | None = None) -> None:
     dir; if it contains a single top-level folder, import that folder."""
     if path.lower().endswith(".zip"):
         tmp = tempfile.mkdtemp(prefix="prettyboot-")
-        with zipfile.ZipFile(path) as z:
-            z.extractall(tmp)
-        entries = [os.path.join(tmp, e) for e in os.listdir(tmp)]
-        dirs = [e for e in entries if os.path.isdir(e)]
-        src = dirs[0] if len(dirs) == 1 else tmp
-        import_theme(src, name)
+        try:
+            with zipfile.ZipFile(path) as z:
+                z.extractall(tmp)
+            entries = [os.path.join(tmp, e) for e in os.listdir(tmp)]
+            dirs = [e for e in entries if os.path.isdir(e)]
+            src = dirs[0] if len(dirs) == 1 else tmp
+            import_theme(src, name)
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
     else:
         import_theme(path, name)

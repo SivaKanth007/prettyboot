@@ -111,9 +111,8 @@ Scripts are plain bash; `lib.sh` holds shared helpers. All scripts honor
 
 ## Roadmap
 
-- Optional desktop app (drag-and-drop themes, icon editing), packaged as
-  `.deb`/AppImage/Flatpak, wrapping this shell core.
 - Opt-in light/dark auto-switch (only when both variants exist).
+- AppImage/Flatpak packaging in addition to the `.deb`.
 
 ## License
 
