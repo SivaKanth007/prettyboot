@@ -4,6 +4,7 @@ lazily by app.py."""
 import os
 import sys
 
+from . import bootscan
 from . import layout as L
 
 
@@ -43,6 +44,39 @@ def _entry_icons(theme_dir: str) -> list:
     return ordered
 
 
+def _sim_entries(theme_dir: str) -> list:
+    """Fallback simulated dual-boot menu: (label, icon_path) per entry."""
+    labels = {"os_linux.png": "Ubuntu", "os_win.png": "Windows"}
+    return [(labels.get(_canon(os.path.basename(p)), "Boot entry"), p)
+            for p in _entry_icons(theme_dir)]
+
+
+def _real_boot_assets(theme_dir: str):
+    """Scan the live ESP this theme sits on; None when not on an ESP.
+    Returns (entries, tools): entries = [(label, icon_path-or-None)],
+    tools = [icon_path]."""
+    refind_dir = os.path.dirname(os.path.dirname(theme_dir))
+    efi_root = os.path.dirname(refind_dir)
+    if os.path.basename(efi_root).upper() != "EFI" \
+            or not os.path.isdir(efi_root):
+        return None
+    volume = bootscan.volume_label(os.path.dirname(efi_root))
+    raw = bootscan.scan_entries(efi_root, refind_dir, volume)
+    if not raw:
+        return None
+    icon_for = {
+        "win": [os.path.join(theme_dir, "icons", "os_win8.png"),
+                os.path.join(theme_dir, "icons", "os_win.png")],
+        "linux": [os.path.join(theme_dir, "icons", "os_linux.png")],
+        "unknown": [os.path.join(refind_dir, "icons", "os_unknown.png")],
+    }
+    entries = []
+    for e in raw:
+        icon = next((c for c in icon_for[e["key"]] if os.path.isfile(c)), None)
+        entries.append((e["label"], icon))
+    return entries, bootscan.scan_tools(efi_root, refind_dir)
+
+
 def _load_surface(path):
     import cairo
     try:
@@ -53,7 +87,20 @@ def _load_surface(path):
 
 
 def _load_assets(theme_dir: str) -> dict:
-    """Decode all theme surfaces once: background, selection_big, entry icons."""
+    """Decode all surfaces once: background, selection, entries, tools.
+    Entries come from the live ESP when the theme sits on one (the preview
+    then replicates the user's actual boot menu); otherwise a simulated
+    dual-boot menu. `tools` is None in the simulated case (drawn as
+    outline placeholders)."""
+    real = _real_boot_assets(theme_dir)
+    if real:
+        raw_entries, tool_paths = real
+        tools = [s for s in (_load_surface(p) for p in tool_paths) if s]
+    else:
+        raw_entries = _sim_entries(theme_dir)
+        tools = None
+    entries = [(label, _load_surface(p) if p else None)
+               for label, p in raw_entries]
     bg = theme_assets(theme_dir)["background"]
     bg_surface = _load_surface(bg) if bg else None
     return {
@@ -61,7 +108,8 @@ def _load_assets(theme_dir: str) -> dict:
         "dark_bg": _is_dark(bg_surface),
         "selection_big": _load_surface(
             os.path.join(theme_dir, "selection_big.png")),
-        "entries": [(p, _load_surface(p)) for p in _entry_icons(theme_dir)],
+        "entries": entries,
+        "tools": tools,
         "conf": L.parse_theme_conf(os.path.join(theme_dir, "theme.conf")),
     }
 
@@ -114,10 +162,10 @@ def _paint(ctx, width: int, height: int, assets: dict, selected: int = 0):
     holding pre-decoded surfaces."""
     conf = assets["conf"]
     entries = assets["entries"]
-    n_small = 6  # tools row: shell, about, clean-nvram, shutdown, reboot, firmware
+    tools = assets["tools"]
+    n_small = len(tools) if tools else 6
     out = L.layout(width, height, max(len(entries), 1), n_small,
                    conf, selected=selected)
-    labels = {"os_linux.png": "Ubuntu", "os_win.png": "Windows"}
 
     # background (or near-black, rEFInd's default)
     ctx.set_source_rgb(0.02, 0.02, 0.02)
@@ -131,7 +179,7 @@ def _paint(ctx, width: int, height: int, assets: dict, selected: int = 0):
         _draw_scaled(ctx, assets["selection_big"], *out["selection_big"])
 
     # big entry icons
-    for rect, (_path, s) in zip(out["big_icons"], entries):
+    for rect, (_label, s) in zip(out["big_icons"], entries):
         if s:
             _draw_scaled(ctx, s, *rect)
 
@@ -139,8 +187,7 @@ def _paint(ctx, width: int, height: int, assets: dict, selected: int = 0):
     # brightness: white-on-dark, black-on-light, with a contrasting shadow)
     if "label" not in conf["hideui"] and entries:
         idx = min(max(selected, 0), len(entries) - 1)
-        key = _canon(os.path.basename(entries[idx][0]))
-        text = labels.get(key, "Boot entry")
+        text = entries[idx][0] or "Boot entry"
         ctx.select_font_face("sans")
         ctx.set_font_size(max(14, height // 50))
         ext = ctx.text_extents(text)
@@ -156,19 +203,24 @@ def _paint(ctx, width: int, height: int, assets: dict, selected: int = 0):
         ctx.move_to(cx - ext.width / 2, ty + ext.height)
         ctx.show_text(text)
 
-    # small tools row: neutral placeholder outlines (rEFInd built-in icons)
+    # small tools row: real rEFInd icons when scanned from the ESP,
+    # neutral outline placeholders in the simulated fallback
     if "tools" not in conf["hideui"]:
-        for x, y, w, h in out["small_icons"]:
-            ctx.set_source_rgba(1, 1, 1, 0.35)
-            r = 6
-            ctx.new_sub_path()
-            ctx.arc(x + w - r, y + r, r, -1.5708, 0)
-            ctx.arc(x + w - r, y + h - r, r, 0, 1.5708)
-            ctx.arc(x + r, y + h - r, r, 1.5708, 3.1416)
-            ctx.arc(x + r, y + r, r, 3.1416, 4.7124)
-            ctx.close_path()
-            ctx.set_line_width(2)
-            ctx.stroke()
+        if tools:
+            for rect, s in zip(out["small_icons"], tools):
+                _draw_scaled(ctx, s, *rect)
+        else:
+            for x, y, w, h in out["small_icons"]:
+                ctx.set_source_rgba(1, 1, 1, 0.35)
+                r = 6
+                ctx.new_sub_path()
+                ctx.arc(x + w - r, y + r, r, -1.5708, 0)
+                ctx.arc(x + w - r, y + h - r, r, 0, 1.5708)
+                ctx.arc(x + r, y + h - r, r, 1.5708, 3.1416)
+                ctx.arc(x + r, y + r, r, 3.1416, 4.7124)
+                ctx.close_path()
+                ctx.set_line_width(2)
+                ctx.stroke()
 
 
 def render_png(theme_dir: str, out_path: str,
