@@ -9,6 +9,15 @@ light and dark, and lets you switch or add themes with one command — safely.
 
 ## Install (Ubuntu/Debian)
 
+Grab the `.deb` from the [latest release](https://github.com/SivaKanth007/prettyboot/releases/latest):
+
+```bash
+wget https://github.com/SivaKanth007/prettyboot/releases/download/v1.1.0/prettyboot_1.1.0_all.deb
+sudo apt install ./prettyboot_1.1.0_all.deb
+```
+
+Or via the PPA (auto-updates with `apt upgrade`):
+
 ```bash
 sudo add-apt-repository ppa:sivakanth007/prettyboot
 sudo apt update
