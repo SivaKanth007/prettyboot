@@ -57,3 +57,25 @@ def test_scan_entries_no_volume_label(tmp_path):
 
 def test_scan_entries_missing_root(tmp_path):
     assert bootscan.scan_entries(str(tmp_path / "nope"), str(tmp_path), "X") == []
+
+
+def test_scan_tools_real_layout(tmp_path):
+    efi = _fake_esp(tmp_path)
+    tools = bootscan.scan_tools(str(efi), str(efi / "refind"))
+    names = [Path(t).name for t in tools]
+    # mok present (mm*.efi on ESP), no shell; then the always-on five
+    assert names == ["tool_mok_tool.png", "func_about.png", "func_hidden.png",
+                     "func_shutdown.png", "func_reset.png", "func_firmware.png"]
+    assert all(Path(t).is_file() for t in tools)
+
+
+def test_scan_tools_skips_missing_icons(tmp_path):
+    efi = _fake_esp(tmp_path)
+    (efi / "refind" / "icons" / "func_hidden.png").unlink()
+    names = [Path(t).name for t in
+             bootscan.scan_tools(str(efi), str(efi / "refind"))]
+    assert "func_hidden.png" not in names
+
+
+def test_volume_label_failure_is_empty(tmp_path):
+    assert bootscan.volume_label(str(tmp_path / "not-a-mountpoint")) == ""

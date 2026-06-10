@@ -70,3 +70,44 @@ def scan_entries(efi_root: str, refind_dir: str, volume: str) -> list:
                 saw_linux = True
             entries.append({"label": f"Boot {desc}{suffix}", "key": key})
     return entries
+
+
+def scan_tools(efi_root: str, refind_dir: str) -> list:
+    """Ordered absolute icon paths for the tools row rEFInd will show.
+    Conditional tools first (mok, shell), then rEFInd's defaults; an icon
+    is included only if its PNG exists in <refind_dir>/icons/."""
+    have_mok = have_shell = False
+    for _sub, _dirs, files in os.walk(efi_root):
+        for fn in files:
+            low = fn.lower()
+            if low.endswith(".efi"):
+                if low.startswith(("mm", "mokmanager")):
+                    have_mok = True
+                elif low.startswith("shell"):
+                    have_shell = True
+    candidates = []
+    if have_mok:
+        candidates.append("tool_mok_tool.png")
+    if have_shell:
+        candidates.append("tool_shell.png")
+    candidates += ["func_about.png", "func_hidden.png", "func_shutdown.png",
+                   "func_reset.png", "func_firmware.png"]
+    icons = os.path.join(refind_dir, "icons")
+    return [p for p in (os.path.join(icons, c) for c in candidates)
+            if os.path.isfile(p)]
+
+
+def volume_label(mountpoint: str) -> str:
+    """Filesystem label of the partition mounted at mountpoint; '' on
+    any failure (missing tools, not a mountpoint, no label)."""
+    try:
+        dev = subprocess.run(
+            ["findmnt", "-no", "SOURCE", mountpoint],
+            capture_output=True, text=True, check=True).stdout.strip()
+        if not dev:
+            return ""
+        return subprocess.run(
+            ["lsblk", "-no", "LABEL", dev],
+            capture_output=True, text=True, check=True).stdout.strip()
+    except (OSError, subprocess.CalledProcessError):
+        return ""
