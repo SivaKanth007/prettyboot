@@ -7,6 +7,18 @@ light and dark, and lets you switch or add themes with one command — safely.
 > **Scope:** UEFI firmware + rEFInd. Themes follow rEFInd's standard layout, so any
 > rEFInd theme from the internet drops in and works.
 
+<p align="center">
+  <img src="docs/media/boot-menu.gif" alt="Animated boot menu: selection moving between Ubuntu and Windows in the mac-dark and mac-light themes" width="720">
+</p>
+
+## Themes
+
+The bundled Mac-style theme, in dark and light:
+
+| mac-dark | mac-light |
+|----------|-----------|
+| ![mac-dark boot menu](docs/media/preview-mac-dark.png) | ![mac-light boot menu](docs/media/preview-mac-light.png) |
+
 ## Install (Ubuntu/Debian)
 
 Grab the `.deb` from the [latest release](https://github.com/SivaKanth007/prettyboot/releases/latest):
@@ -37,6 +49,8 @@ rEFInd. Updates arrive automatically through `apt upgrade`.
 The app has three tabs: **Themes** (switch + full-size live preview +
 drag-drop import), **Settings** (curated, validated options), and
 **Advanced** (raw `refind.conf` with automatic backup).
+
+![prettyboot GUI, Themes tab: the preview replicates the real boot menu by scanning your ESP](docs/media/gui-themes.png)
 
 ## Install from source
 
@@ -69,6 +83,10 @@ sudo ./prettyboot.sh timeout off         # menu waits forever (off = 0 = no auto
 sudo ./prettyboot.sh timeout 10          # auto-boot default after 10s
 sudo ./prettyboot.sh reset               # remove prettyboot settings -> plain rEFInd
 ```
+
+<p align="center">
+  <img src="docs/media/cli-demo.gif" alt="Terminal session: prettyboot list, use mac-light, next, timeout 10" width="640">
+</p>
 
 ## Adding your own theme
 
@@ -107,6 +125,9 @@ The Mac theme PNGs are committed (vendored). To regenerate or tweak them:
 sudo apt-get install -y imagemagick librsvg2-bin
 ./build-assets.sh
 ```
+
+README media (previews, GIFs) regenerate with `docs/media/build-media.sh`
+(needs imagemagick; [agg](https://github.com/asciinema/agg) for the CLI demo GIF).
 
 ## Development
 
